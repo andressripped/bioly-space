@@ -99,11 +99,8 @@ export default function Home() {
               {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </button>
 
-            <Link href="/login" className="text-sm font-semibold text-[#111111] dark:text-white hover:text-[#555555] dark:hover:text-[#a1a1aa] transition-colors hidden sm:block">
-              Log in
-            </Link>
-            <Link href="/signup" className="text-sm font-semibold bg-[#111111] dark:bg-white text-white dark:text-black px-5 py-2.5 rounded-lg hover:bg-black dark:hover:bg-gray-200 transition-colors">
-              Sign up
+            <Link href="/login" className="text-sm font-semibold bg-[#111111] dark:bg-white text-white dark:text-black px-6 py-3 rounded-xl hover:bg-black dark:hover:bg-gray-200 transition-all shadow-sm active:scale-[0.98]">
+              Entrar
             </Link>
           </div>
         </div>
@@ -144,7 +141,7 @@ export default function Home() {
                 />
               </div>
               <Link 
-                href={`/signup?username=${claimUsername}`} 
+                href={`/login?username=${claimUsername}`} 
                 className="bg-[#111111] dark:bg-white text-white dark:text-black px-8 py-4 rounded-xl font-medium hover:bg-black dark:hover:bg-gray-200 transition-colors flex items-center justify-center gap-2 group"
               >
                 {t.claim}
