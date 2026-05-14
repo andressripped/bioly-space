@@ -20,6 +20,11 @@ const translations = {
     mock_card2_title: "Podcast Episode",
     mock_card2_desc: "Listen to the new interview",
     mock_vlog: "LATEST VLOG",
+    nav_login: "Sign in",
+    bento_title1: "Multiple Links. One destination.",
+    bento_desc1: "Organize your portfolio, stores and social media in a centralized hub with impeccable design.",
+    bento_title2: "Real-time\nAnalytics",
+    bento_desc2: "Measure your impact visually.",
   },
   ES: {
     badge: "Para la nueva generación de creadores",
@@ -33,6 +38,11 @@ const translations = {
     mock_card2_title: "Nuevo Podcast",
     mock_card2_desc: "Escucha mi última entrevista",
     mock_vlog: "ÚLTIMO VLOG",
+    nav_login: "Entrar",
+    bento_title1: "Múltiples Enlaces. Un solo destino.",
+    bento_desc1: "Organiza tu portafolio, tiendas y redes sociales en un hub centralizado con un diseño impecable.",
+    bento_title2: "Analíticas\nen tiempo real",
+    bento_desc2: "Mide tu impacto visualmente.",
   },
   PT: {
     badge: "Para a nova geração de criadores",
@@ -46,6 +56,11 @@ const translations = {
     mock_card2_title: "Novo Podcast",
     mock_card2_desc: "Ouça a última entrevista",
     mock_vlog: "ÚLTIMO VLOG",
+    nav_login: "Entrar",
+    bento_title1: "Múltiplos Links. Um único destino.",
+    bento_desc1: "Organize seu portfólio, lojas e redes sociais em um hub centralizado com design impecável.",
+    bento_title2: "Análises\nem tempo real",
+    bento_desc2: "Meça seu impacto visualmente.",
   }
 };
 
@@ -99,7 +114,7 @@ export default function Home() {
             </button>
 
             <Link href="/login" className="text-sm font-semibold bg-[#111111] dark:bg-white text-white dark:text-black px-6 py-3 rounded-xl hover:bg-black dark:hover:bg-gray-200 transition-all shadow-sm active:scale-[0.98]">
-              Entrar
+              {t.nav_login}
             </Link>
           </div>
         </div>
@@ -250,12 +265,12 @@ export default function Home() {
         <div className="max-w-7xl mx-auto">
           <div className="grid md:grid-cols-3 gap-6">
             <div className="md:col-span-2 bg-white dark:bg-[#111] rounded-3xl p-10 border border-[#eeeeee] dark:border-[#222] shadow-sm transition-colors duration-300">
-              <h3 className="text-3xl font-serif text-[#111111] dark:text-white mb-4">Múltiples Enlaces. Un solo destino.</h3>
-              <p className="text-[#555555] dark:text-[#a1a1aa] max-w-md text-lg">Organiza tu portafolio, tiendas y redes sociales en un hub centralizado con un diseño impecable.</p>
+              <h3 className="text-3xl font-serif text-[#111111] dark:text-white mb-4">{t.bento_title1}</h3>
+              <p className="text-[#555555] dark:text-[#a1a1aa] max-w-md text-lg">{t.bento_desc1}</p>
             </div>
             <div className="bg-white dark:bg-[#111] rounded-3xl p-10 border border-[#eeeeee] dark:border-[#222] shadow-sm flex flex-col justify-between transition-colors duration-300">
-              <h3 className="text-3xl font-serif text-[#111111] dark:text-white">Analíticas<br/>en tiempo real</h3>
-              <p className="text-[#555555] dark:text-[#a1a1aa] mt-4">Mide tu impacto visualmente.</p>
+              <h3 className="text-3xl font-serif text-[#111111] dark:text-white whitespace-pre-line">{t.bento_title2}</h3>
+              <p className="text-[#555555] dark:text-[#a1a1aa] mt-4">{t.bento_desc2}</p>
             </div>
           </div>
         </div>
