@@ -12,14 +12,15 @@ import {
   BarChart,
   Bar,
 } from "recharts";
-import { Eye, MousePointerClick, TrendingUp, Users } from "lucide-react";
+import { Eye, MousePointerClick, TrendingUp, Users, Mail } from "lucide-react";
 
 interface AnalyticsClientProps {
   rawData: any[];
   links: any[];
+  subscribers: any[];
 }
 
-export default function AnalyticsClient({ rawData, links }: AnalyticsClientProps) {
+export default function AnalyticsClient({ rawData, links, subscribers }: AnalyticsClientProps) {
   // Procesar datos para KPI Cards
   const pageViews = rawData.filter((e) => e.event_type === "page_view").length;
   const linkClicks = rawData.filter((e) => e.event_type === "link_click").length;
@@ -156,6 +157,54 @@ export default function AnalyticsClient({ rawData, links }: AnalyticsClientProps
             </div>
           )}
         </div>
+      </div>
+
+      {/* AUDIENCIA / SUSCRIPTORES */}
+      <div className="bg-white dark:bg-[#111] p-6 lg:p-8 rounded-3xl border border-[#eeeeee] dark:border-[#222] shadow-sm">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-bold">Suscriptores ({subscribers.length})</h3>
+          <button 
+            className="text-xs font-bold uppercase tracking-widest text-[#555] hover:text-[#111] dark:text-[#a1a1aa] dark:hover:text-white transition-colors"
+            onClick={() => {
+              const csvContent = "data:text/csv;charset=utf-8," + "Email,Fecha\n" + subscribers.map(s => `${s.email},${new Date(s.created_at).toLocaleDateString()}`).join("\n");
+              const encodedUri = encodeURI(csvContent);
+              const link = document.createElement("a");
+              link.setAttribute("href", encodedUri);
+              link.setAttribute("download", "suscriptores.csv");
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+            }}
+          >
+            Exportar CSV
+          </button>
+        </div>
+        
+        {subscribers.length > 0 ? (
+          <div className="overflow-hidden border border-[#eeeeee] dark:border-[#222] rounded-2xl">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-[#f9fafb] dark:bg-[#0a0a0a] border-b border-[#eeeeee] dark:border-[#222]">
+                <tr>
+                  <th className="px-4 py-3 font-semibold text-[#555] dark:text-[#a1a1aa]">Email</th>
+                  <th className="px-4 py-3 font-semibold text-[#555] dark:text-[#a1a1aa] w-32">Fecha</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#eeeeee] dark:divide-[#222]">
+                {subscribers.map((sub: any) => (
+                  <tr key={sub.id} className="hover:bg-gray-50 dark:hover:bg-[#151515] transition-colors">
+                    <td className="px-4 py-3 font-medium">{sub.email}</td>
+                    <td className="px-4 py-3 text-[#999999]">{new Date(sub.created_at).toLocaleDateString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="p-8 border-2 border-dashed border-[#eeeeee] dark:border-[#222] rounded-2xl text-center text-[#999999]">
+            <Mail className="w-8 h-8 mx-auto mb-3 text-[#cccccc] dark:text-[#444]" />
+            Aún no tienes suscriptores. <br/> ¡Asegúrate de compartir tu perfil!
+          </div>
+        )}
       </div>
     </div>
   );

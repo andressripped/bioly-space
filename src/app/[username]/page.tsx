@@ -78,7 +78,6 @@ export default async function PublicProfilePage({ params }: Props) {
     .from("links")
     .select("*")
     .eq("user_id", profile.id)
-    .eq("is_active", true)
     .order("position", { ascending: true });
 
   return (

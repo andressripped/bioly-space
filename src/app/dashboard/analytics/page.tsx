@@ -36,18 +36,25 @@ export default async function AnalyticsPage() {
     .select("id, title")
     .eq("user_id", user.id);
 
+  // 4. Fetch subscribers
+  const { data: subscribers } = await supabase
+    .from("email_subscribers")
+    .select("*")
+    .eq("profile_id", profile.id)
+    .order("created_at", { ascending: false });
+
   return (
     <div className="flex-1 p-6 lg:p-10 lg:pl-10 ml-0 md:ml-[420px] max-h-screen overflow-y-auto w-full max-w-5xl mx-auto">
       <div className="mb-10 mt-16 md:mt-0">
         <h1 className="text-3xl font-serif font-bold text-[#111111] dark:text-white mb-2">
-          Analíticas
+          Analíticas y Audiencia
         </h1>
         <p className="text-[#555555] dark:text-[#a1a1aa]">
-          Mide el impacto de tu identidad digital.
+          Mide el impacto de tu identidad digital y tu lista de correos.
         </p>
       </div>
 
-      <AnalyticsClient rawData={analyticsData || []} links={links || []} />
+      <AnalyticsClient rawData={analyticsData || []} links={links || []} subscribers={subscribers || []} />
     </div>
   );
 }
