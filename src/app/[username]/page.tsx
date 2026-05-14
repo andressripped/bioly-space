@@ -1,14 +1,16 @@
-import { supabase } from "@/lib/supabase";
-import ProfileClient from "./ProfileClient";
+import { createClient } from "@/utils/supabase/server";
 import { notFound } from "next/navigation";
+import ProfileView from "./ProfileView";
 
-export const revalidate = 60; // revalidate every minute
+export default async function PublicProfilePage({
+  params,
+}: {
+  params: Promise<{ username: string }>;
+}) {
+  const { username } = await params;
+  const supabase = await createClient();
 
-export default async function ProfilePage({ params }: { params: Promise<{ username: string }> }) {
-  const resolvedParams = await params;
-  const username = resolvedParams.username;
-
-  // 1. Fetch Profile
+  // 1. Buscar el perfil por el username
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("*")
@@ -16,28 +18,20 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
     .single();
 
   if (profileError || !profile) {
-    // Si no existe en la base de datos, mostramos un 404
-    notFound();
+    return notFound();
   }
 
-  // 2. Fetch Socials
-  const { data: socials } = await supabase
-    .from("social_links")
-    .select("*")
-    .eq("profile_id", profile.id)
-    .order("order_index", { ascending: true });
-
-  // 3. Fetch Links
-  const { data: links } = await supabase
+  // 2. Buscar los enlaces de ese usuario
+  const { data: links, error: linksError } = await supabase
     .from("links")
     .select("*")
-    .eq("profile_id", profile.id)
-    .order("order_index", { ascending: true });
+    .eq("user_id", profile.id)
+    .eq("is_active", true)
+    .order("position", { ascending: true });
 
   return (
-    <ProfileClient 
+    <ProfileView 
       profile={profile} 
-      socials={socials || []} 
       links={links || []} 
     />
   );

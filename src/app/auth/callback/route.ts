@@ -28,6 +28,24 @@ export async function GET(request: Request) {
     )
     const { error } = await supabase.auth.exchangeCodeForSession(code)
     if (!error) {
+      // Check if the user already has a profile
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('id, onboarding_completed')
+          .eq('id', user.id)
+          .single()
+
+        // No profile yet → go to onboarding (will consume pending_username)
+        if (!profile) {
+          return NextResponse.redirect(`${origin}/onboarding`)
+        }
+        // Profile exists but onboarding not completed → back to onboarding
+        if (profile.onboarding_completed === false) {
+          return NextResponse.redirect(`${origin}/onboarding`)
+        }
+      }
       return NextResponse.redirect(`${origin}${next}`)
     }
     

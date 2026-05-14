@@ -15,7 +15,7 @@ export async function updateSession(request: NextRequest) {
           return request.cookies.getAll()
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value))
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
           supabaseResponse = NextResponse.next({
             request,
           })
@@ -27,8 +27,26 @@ export async function updateSession(request: NextRequest) {
     }
   )
 
-  // refreshes session if expired
-  await supabase.auth.getUser()
+  // Refresh session if expired
+  const { data: { user } } = await supabase.auth.getUser()
+
+  const { pathname } = request.nextUrl
+
+  // Protected routes: require authentication
+  const isProtected = pathname.startsWith('/dashboard') || pathname.startsWith('/onboarding')
+  if (isProtected && !user) {
+    const redirectUrl = request.nextUrl.clone()
+    redirectUrl.pathname = '/login'
+    return NextResponse.redirect(redirectUrl)
+  }
+
+  // If logged in and trying to access login/signup, redirect to dashboard
+  const isAuthPage = pathname === '/login' || pathname === '/signup'
+  if (isAuthPage && user) {
+    const redirectUrl = request.nextUrl.clone()
+    redirectUrl.pathname = '/dashboard'
+    return NextResponse.redirect(redirectUrl)
+  }
 
   return supabaseResponse
 }

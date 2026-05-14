@@ -9,8 +9,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Link in Bio",
-  description: "A premium minimalist link-in-bio page",
+  title: "Bioly — Tu identidad digital",
+  description: "Consolida tus enlaces, contenido y negocio en un espacio elegante diseñado para convertir seguidores en clientes.",
 };
 
 export default function RootLayout({

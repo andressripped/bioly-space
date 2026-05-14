@@ -1,8 +1,43 @@
 "use client";
 
-import { useState } from "react";
-import { X, Link as LinkIcon, Type, Globe } from "lucide-react";
+import { useState, useMemo } from "react";
+import { 
+  X, Link as LinkIcon, Type, Globe, Search, PlusCircle, Loader2
+} from "lucide-react";
+import { 
+  SiInstagram, SiYoutube, SiTiktok, SiX, SiFacebook, 
+  SiSpotify, SiTwitch, SiDiscord, SiWhatsapp, 
+  SiTelegram, SiGithub, SiPinterest, SiSnapchat
+} from "react-icons/si";
+import { FaLinkedin } from "react-icons/fa";
 import { createClient } from "@/utils/supabase/client";
+
+interface Platform {
+  id: string;
+  name: string;
+  icon: any;
+  prefix: string;
+  color: string;
+  placeholder: string;
+}
+
+const PLATFORMS: Platform[] = [
+  { id: "instagram", name: "Instagram", icon: SiInstagram, prefix: "instagram.com/", color: "#E4405F", placeholder: "tu_usuario" },
+  { id: "youtube", name: "YouTube", icon: SiYoutube, prefix: "youtube.com/@", color: "#FF0000", placeholder: "tu_canal" },
+  { id: "tiktok", name: "TikTok", icon: SiTiktok, prefix: "tiktok.com/@", color: "#000000", placeholder: "tu_usuario" },
+  { id: "twitter", name: "X / Twitter", icon: SiX, prefix: "x.com/", color: "#000000", placeholder: "tu_usuario" },
+  { id: "facebook", name: "Facebook", icon: SiFacebook, prefix: "facebook.com/", color: "#1877F2", placeholder: "tu_pagina" },
+  { id: "linkedin", name: "LinkedIn", icon: FaLinkedin, prefix: "linkedin.com/in/", color: "#0A66C2", placeholder: "tu_perfil" },
+  { id: "spotify", name: "Spotify", icon: SiSpotify, prefix: "open.spotify.com/user/", color: "#1DB954", placeholder: "tu_id" },
+  { id: "twitch", name: "Twitch", icon: SiTwitch, prefix: "twitch.tv/", color: "#9146FF", placeholder: "tu_canal" },
+  { id: "discord", name: "Discord", icon: SiDiscord, prefix: "discord.gg/", color: "#5865F2", placeholder: "invitacion" },
+  { id: "whatsapp", name: "WhatsApp", icon: SiWhatsapp, prefix: "wa.me/", color: "#25D366", placeholder: "54911..." },
+  { id: "telegram", name: "Telegram", icon: SiTelegram, prefix: "t.me/", color: "#26A5E4", placeholder: "tu_usuario" },
+  { id: "github", name: "GitHub", icon: SiGithub, prefix: "github.com/", color: "#181717", placeholder: "tu_usuario" },
+  { id: "pinterest", name: "Pinterest", icon: SiPinterest, prefix: "pinterest.com/", color: "#BD081C", placeholder: "tu_usuario" },
+  { id: "snapchat", name: "Snapchat", icon: SiSnapchat, prefix: "snapchat.com/add/", color: "#FFFC00", placeholder: "tu_usuario" },
+  { id: "custom", name: "Personalizado", icon: LinkIcon, prefix: "", color: "#666666", placeholder: "https://tu-link.com" },
+];
 
 interface AddLinkModalProps {
   isOpen: boolean;
@@ -11,11 +46,18 @@ interface AddLinkModalProps {
 }
 
 export function AddLinkModal({ isOpen, onClose, onSuccess }: AddLinkModalProps) {
+  const [selectedPlatform, setSelectedPlatform] = useState<Platform>(PLATFORMS[0]);
   const [title, setTitle] = useState("");
-  const [url, setUrl] = useState("");
+  const [handle, setHandle] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  
   const supabase = createClient();
+
+  const filteredPlatforms = useMemo(() => {
+    return PLATFORMS.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
+  }, [searchTerm]);
 
   if (!isOpen) return null;
 
@@ -28,21 +70,44 @@ export function AddLinkModal({ isOpen, onClose, onSuccess }: AddLinkModalProps) 
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No estás autenticado");
 
+      let finalUrl = handle.trim();
+      if (selectedPlatform.id !== "custom") {
+        finalUrl = `https://${selectedPlatform.prefix}${finalUrl.replace(/^https?:\/\//, '').replace(selectedPlatform.prefix, '')}`;
+      } else {
+        if (!/^https?:\/\//i.test(finalUrl)) {
+          finalUrl = `https://${finalUrl}`;
+        }
+      }
+
+      const finalTitle = title.trim() || selectedPlatform.name;
+
+      // Calculate the next position value
+      const { data: maxPosData } = await supabase
+        .from("links")
+        .select("position")
+        .eq("user_id", user.id)
+        .order("position", { ascending: false })
+        .limit(1)
+        .single();
+      const nextPosition = (maxPosData?.position ?? -1) + 1;
+
       const { error: insertError } = await supabase
         .from("links")
         .insert([
           {
             user_id: user.id,
-            title,
-            url,
+            title: finalTitle,
+            url: finalUrl,
+            icon: selectedPlatform.id,
             is_active: true,
+            position: nextPosition,
           }
         ]);
 
       if (insertError) throw insertError;
 
       setTitle("");
-      setUrl("");
+      setHandle("");
       onSuccess();
       onClose();
     } catch (err: any) {
@@ -54,80 +119,109 @@ export function AddLinkModal({ isOpen, onClose, onSuccess }: AddLinkModalProps) 
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      {/* Backdrop */}
-      <div 
-        className="absolute inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm transition-opacity"
-        onClick={onClose}
-      />
+      <div className="absolute inset-0 bg-black/40 dark:bg-black/80 backdrop-blur-md transition-opacity" onClick={onClose} />
       
-      {/* Modal Content */}
-      <div className="relative w-full max-w-lg bg-white dark:bg-[#111] border border-[#eeeeee] dark:border-[#222] rounded-[2.5rem] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
-        <div className="p-8">
-          <div className="flex justify-between items-center mb-8">
-            <h2 className="text-2xl font-serif text-[#111111] dark:text-white">Añadir nuevo enlace</h2>
-            <button 
-              onClick={onClose}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-[#222] rounded-full transition-colors"
-            >
-              <X className="w-5 h-5 text-[#999999]" />
-            </button>
+      <div className="relative w-full max-w-2xl bg-white dark:bg-[#0a0a0a] border border-[#eeeeee] dark:border-[#222] rounded-[3rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in fade-in zoom-in duration-300">
+        <div className="p-8 border-b border-[#eeeeee] dark:border-[#222] flex justify-between items-center bg-white dark:bg-[#0a0a0a] z-10">
+          <div>
+            <h2 className="text-2xl font-serif text-[#111111] dark:text-white">Añadir enlace</h2>
+            <p className="text-sm text-[#999999]">Selecciona una plataforma para empezar</p>
+          </div>
+          <button onClick={onClose} className="p-3 hover:bg-gray-100 dark:hover:bg-[#111] rounded-full transition-colors">
+            <X className="w-5 h-5 text-[#999999]" />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-8 space-y-8">
+          {/* Selector de Plataforma */}
+          <div className="space-y-4">
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#999999]" />
+              <input 
+                type="text" 
+                placeholder="Buscar plataforma..." 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full bg-[#f9fafb] dark:bg-[#111] border border-[#eeeeee] dark:border-[#222] rounded-2xl py-3 pl-11 pr-4 text-sm focus:outline-none focus:border-[#111111] dark:focus:border-white transition-all"
+              />
+            </div>
+
+            <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
+              {filteredPlatforms.map((p) => (
+                <button
+                  key={p.id}
+                  onClick={() => {
+                    setSelectedPlatform(p);
+                    setTitle("");
+                  }}
+                  className={`flex flex-col items-center justify-center p-4 rounded-3xl border transition-all gap-2 group ${
+                    selectedPlatform.id === p.id 
+                      ? "bg-[#111111] border-[#111111] text-white dark:bg-white dark:border-white dark:text-black scale-[1.02] shadow-lg shadow-black/10 dark:shadow-white/5" 
+                      : "bg-[#f9fafb] dark:bg-[#111] border-[#eeeeee] dark:border-[#222] hover:border-[#111111] dark:hover:border-white"
+                  }`}
+                >
+                  <p.icon className={`w-6 h-6 transition-transform group-hover:scale-110 ${selectedPlatform.id === p.id ? "" : "text-[#555555] dark:text-[#a1a1aa]"}`} />
+                  <span className="text-[10px] font-bold uppercase tracking-tighter truncate w-full text-center">{p.name}</span>
+                </button>
+              ))}
+            </div>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {error && (
-              <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-900/30 text-red-600 dark:text-red-400 text-sm">
-                {error}
-              </div>
-            )}
+            {error && <div className="p-4 rounded-2xl bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-900/30 text-red-600 dark:text-red-400 text-sm font-medium">{error}</div>}
 
-            <div>
-              <label className="block text-sm font-medium text-[#555555] dark:text-[#a1a1aa] mb-2 ml-1">Título del enlace</label>
-              <div className="relative">
-                <Type className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#999999]" />
-                <input
-                  type="text"
-                  required
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="w-full bg-[#f9fafb] dark:bg-[#0a0a0a] border border-[#eeeeee] dark:border-[#222] rounded-2xl py-4 pl-12 pr-4 text-[#111111] dark:text-white focus:outline-none focus:border-[#111111] dark:focus:border-white transition-all font-medium"
-                  placeholder="Ej: Mi canal de YouTube"
-                />
+            <div className="grid sm:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-widest text-[#999999] mb-2 ml-1">Título (Opcional)</label>
+                <div className="relative">
+                  <Type className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#999999]" />
+                  <input
+                    type="text"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    className="w-full bg-[#f9fafb] dark:bg-[#111] border border-[#eeeeee] dark:border-[#222] rounded-2xl py-4 pl-12 pr-4 text-[#111111] dark:text-white focus:outline-none focus:border-[#111111] dark:focus:border-white transition-all font-medium"
+                    placeholder={selectedPlatform.name}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-widest text-[#999999] mb-2 ml-1">
+                  {selectedPlatform.id === "custom" ? "URL Completa" : "Tu usuario / handle"}
+                </label>
+                <div className="relative">
+                  {selectedPlatform.id === "custom" ? (
+                    <Globe className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#999999]" />
+                  ) : (
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xs font-bold text-[#999999] dark:text-[#666]">
+                      {selectedPlatform.id === "whatsapp" ? "wa.me/" : "@"}
+                    </span>
+                  )}
+                  <input
+                    type="text"
+                    required
+                    value={handle}
+                    onChange={(e) => setHandle(e.target.value)}
+                    className={`w-full bg-[#f9fafb] dark:bg-[#111] border border-[#eeeeee] dark:border-[#222] rounded-2xl py-4 pr-4 text-[#111111] dark:text-white focus:outline-none focus:border-[#111111] dark:focus:border-white transition-all font-medium ${selectedPlatform.id === "custom" ? "pl-12" : (selectedPlatform.id === "whatsapp" ? "pl-16" : "pl-8")}`}
+                    placeholder={selectedPlatform.placeholder}
+                  />
+                </div>
+                {selectedPlatform.id !== "custom" && (
+                  <p className="mt-2 text-[10px] text-[#999999] font-medium ml-1">
+                    Se guardará como: <span className="text-[#111111] dark:text-white">{selectedPlatform.prefix}{handle || "..."}</span>
+                  </p>
+                )}
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-[#555555] dark:text-[#a1a1aa] mb-2 ml-1">URL (Destino)</label>
-              <div className="relative">
-                <Globe className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#999999]" />
-                <input
-                  type="url"
-                  required
-                  value={url}
-                  onChange={(e) => setUrl(e.target.value)}
-                  className="w-full bg-[#f9fafb] dark:bg-[#0a0a0a] border border-[#eeeeee] dark:border-[#222] rounded-2xl py-4 pl-12 pr-4 text-[#111111] dark:text-white focus:outline-none focus:border-[#111111] dark:focus:border-white transition-all font-medium"
-                  placeholder="https://youtube.com/@tu_canal"
-                />
-              </div>
-            </div>
-
-            <div className="pt-4 flex gap-3">
-              <button
-                type="button"
-                onClick={onClose}
-                className="flex-1 px-8 py-4 rounded-2xl font-semibold border border-[#eeeeee] dark:border-[#222] text-[#555555] dark:text-[#a1a1aa] hover:bg-gray-50 dark:hover:bg-[#222] transition-all"
-              >
-                Cancelar
-              </button>
+            <div className="pt-4">
               <button
                 type="submit"
                 disabled={loading}
-                className="flex-1 bg-[#111111] dark:bg-white text-white dark:text-black px-8 py-4 rounded-2xl font-semibold hover:opacity-90 disabled:opacity-50 transition-all shadow-lg shadow-black/5 dark:shadow-white/5 flex items-center justify-center gap-2"
+                className="w-full bg-[#111111] dark:bg-white text-white dark:text-black px-8 py-5 rounded-3xl font-bold hover:opacity-90 disabled:opacity-50 transition-all shadow-xl shadow-black/10 dark:shadow-white/5 flex items-center justify-center gap-3 text-lg"
               >
-                {loading ? (
-                  <span className="w-5 h-5 border-2 border-white/20 dark:border-black/20 border-t-white dark:border-t-black rounded-full animate-spin" />
-                ) : (
-                  <>Guardar enlace</>
-                )}
+                {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <PlusCircle className="w-6 h-6" />}
+                {loading ? "Guardando..." : "Confirmar y Añadir"}
               </button>
             </div>
           </form>

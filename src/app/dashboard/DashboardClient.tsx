@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { LayoutDashboard, User, Settings, LogOut, Plus, ExternalLink, Trash2, GripVertical } from "lucide-react";
+import { LayoutDashboard, User, Settings, LogOut, Plus, ExternalLink, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { AddLinkModal } from "./AddLinkModal";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
+import { PlatformIcon } from "@/components/PlatformIcon";
 
 export default function DashboardClient({ initialUser }: { initialUser: any }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -18,6 +19,7 @@ export default function DashboardClient({ initialUser }: { initialUser: any }) {
     const { data, error } = await supabase
       .from("links")
       .select("*")
+      .eq("user_id", initialUser.id)
       .order("position", { ascending: true });
 
     if (!error) {
@@ -98,13 +100,13 @@ export default function DashboardClient({ initialUser }: { initialUser: any }) {
                 key={link.id} 
                 className="group flex items-center gap-4 bg-white dark:bg-[#0a0a0a] border border-[#eeeeee] dark:border-[#222] p-4 rounded-2xl hover:border-[#111111] dark:hover:border-white transition-all shadow-sm"
               >
-                <div className="text-[#999999] cursor-grab active:cursor-grabbing">
-                  <GripVertical className="w-5 h-5" />
+                <div className="w-12 h-12 bg-[#f9fafb] dark:bg-[#111] rounded-xl flex items-center justify-center border border-[#eeeeee] dark:border-[#222]">
+                  <PlatformIcon id={link.icon} className="w-6 h-6 text-[#111111] dark:text-white" />
                 </div>
                 
                 <div className="flex-1">
                   <h3 className="font-semibold text-[#111111] dark:text-white">{link.title}</h3>
-                  <p className="text-sm text-[#999999] truncate max-w-[200px] md:max-w-md">{link.url}</p>
+                  <p className="text-xs text-[#999999] truncate max-w-[150px] md:max-w-md">{link.url}</p>
                 </div>
 
                 <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">

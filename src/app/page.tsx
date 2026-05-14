@@ -65,9 +65,8 @@ export default function Home() {
     else setLang("EN");
   }, []);
 
-  if (!mounted) return null;
-
-  const t = translations[lang];
+  // Use ES as default for SSR — avoids white flash and empty SEO
+  const t = translations[mounted ? lang : "ES"];
 
   return (
     <div className="min-h-screen bg-white dark:bg-[#050505] text-[#111111] dark:text-[#f4f4f5] selection:bg-[#111111] selection:text-white dark:selection:bg-white dark:selection:text-black font-sans overflow-x-hidden transition-colors duration-300">
