@@ -9,10 +9,10 @@ import { ArrowRight, LogOut } from "lucide-react";
 export default function SignoutPage() {
   const [countdown, setCountdown] = useState(5);
   const router = useRouter();
+  const supabase = createClient();
 
   useEffect(() => {
     const performLogout = async () => {
-      const supabase = createClient();
       await supabase.auth.signOut();
     };
     performLogout();
