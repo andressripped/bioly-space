@@ -8,6 +8,7 @@ import {
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
 import { PlatformIcon } from "@/components/PlatformIcon";
+import { QRCodeCanvas } from "qrcode.react";
 
 type Device = "desktop" | "tablet" | "mobile";
 
@@ -59,6 +60,8 @@ export default function ProfileClient({ user }: { user: any }) {
   const [displayName, setDisplayName]   = useState("");
   const [bio, setBio]                   = useState("");
   const [avatarUrl, setAvatarUrl]       = useState<string | null>(null);
+  const [seoTitle, setSeoTitle]         = useState("");
+  const [seoDescription, setSeoDescription] = useState("");
 
   // Appearance
   const [themeColor, setThemeColor]     = useState("#111111");
@@ -87,6 +90,8 @@ export default function ProfileClient({ user }: { user: any }) {
           setThemeColor(profile.theme_color || "#111111");
           setButtonStyle(profile.button_style || "rounded");
           setFontFamily(profile.font_family || "inter");
+          setSeoTitle(profile.seo_title || "");
+          setSeoDescription(profile.seo_description || "");
           if (profile.username) setUsername(profile.username);
         } else {
           setDisplayName(user.user_metadata?.full_name || "");
@@ -140,6 +145,8 @@ export default function ProfileClient({ user }: { user: any }) {
         theme_color:  themeColor,
         button_style: buttonStyle,
         font_family:  fontFamily,
+        seo_title:    seoTitle,
+        seo_description: seoDescription,
         updated_at:   new Date().toISOString(),
       });
       if (upsertErr) throw upsertErr;
@@ -156,6 +163,19 @@ export default function ProfileClient({ user }: { user: any }) {
     navigator.clipboard.writeText(`${window.location.origin}/${username}`);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const downloadQR = () => {
+    const canvas = document.getElementById("qr-code") as HTMLCanvasElement;
+    if (canvas) {
+      const pngUrl = canvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
+      let downloadLink = document.createElement("a");
+      downloadLink.href = pngUrl;
+      downloadLink.download = `${username}-qr.png`;
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+      document.body.removeChild(downloadLink);
+    }
   };
 
   // Derived style classes used in BOTH preview and public page
@@ -302,6 +322,61 @@ export default function ProfileClient({ user }: { user: any }) {
                   className="w-full bg-[#f9fafb] dark:bg-[#111] border border-[#eeeeee] dark:border-[#222] rounded-xl py-3 px-4 focus:outline-none focus:border-[#111111] dark:focus:border-white transition-all font-medium resize-none"
                   placeholder="Cuéntale al mundo quién eres..."
                 />
+              </div>
+
+              {/* SEO Controls */}
+              <div className="pt-4 border-t border-[#eeeeee] dark:border-[#222]">
+                <h3 className="text-sm font-bold mb-4">SEO & Metadatos</h3>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-widest text-[#999999] mb-2">Título de la página (SEO)</label>
+                    <input
+                      type="text"
+                      value={seoTitle}
+                      onChange={(e) => setSeoTitle(e.target.value)}
+                      className="w-full bg-[#f9fafb] dark:bg-[#111] border border-[#eeeeee] dark:border-[#222] rounded-xl py-3 px-4 focus:outline-none focus:border-[#111111] dark:focus:border-white transition-all text-sm"
+                      placeholder={`${displayName || username} | Bioly`}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-widest text-[#999999] mb-2">Descripción (SEO)</label>
+                    <textarea
+                      rows={2}
+                      value={seoDescription}
+                      onChange={(e) => setSeoDescription(e.target.value)}
+                      className="w-full bg-[#f9fafb] dark:bg-[#111] border border-[#eeeeee] dark:border-[#222] rounded-xl py-3 px-4 focus:outline-none focus:border-[#111111] dark:focus:border-white transition-all text-sm resize-none"
+                      placeholder="Breve descripción que aparecerá en Google y al compartir el link."
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* QR Code Generator */}
+              <div className="pt-4 border-t border-[#eeeeee] dark:border-[#222]">
+                <h3 className="text-sm font-bold mb-4">Tu Código QR</h3>
+                <div className="flex items-center gap-6 bg-[#f9fafb] dark:bg-[#111] p-4 rounded-2xl border border-[#eeeeee] dark:border-[#222]">
+                  <div className="bg-white p-2 rounded-xl shadow-sm">
+                    <QRCodeCanvas 
+                      id="qr-code" 
+                      value={`${typeof window !== 'undefined' ? window.location.origin : 'https://bioly.space'}/${username}`} 
+                      size={100} 
+                      level="H" 
+                      includeMargin={false} 
+                      fgColor="#111111" 
+                    />
+                  </div>
+                  <div>
+                    <p className="text-sm text-[#555555] dark:text-[#a1a1aa] mb-3">
+                      Descarga este QR para imprimirlo en tarjetas de presentación o flyers.
+                    </p>
+                    <button 
+                      onClick={downloadQR}
+                      className="text-xs font-bold uppercase tracking-widest bg-[#111111] dark:bg-white text-white dark:text-black px-4 py-2 rounded-lg hover:opacity-90 transition-opacity"
+                    >
+                      Descargar PNG
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           )}

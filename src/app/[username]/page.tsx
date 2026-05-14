@@ -14,7 +14,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("display_name, bio, avatar_url, username")
+    .select("display_name, bio, avatar_url, username, seo_title, seo_description")
     .eq("username", username)
     .single();
 
@@ -26,14 +26,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const displayName = profile.display_name || profile.username;
   const bio = profile.bio || "Mira todos mis links en Bioly";
+  
+  const title = profile.seo_title || `${displayName} | Bioly`;
+  const description = profile.seo_description || bio;
+  
   const ogImageUrl = `/api/og/${username}`;
 
   return {
-    title: `${displayName} | Bioly`,
-    description: bio,
+    title: title,
+    description: description,
     openGraph: {
-      title: `${displayName} | Bioly`,
-      description: bio,
+      title: title,
+      description: description,
       url: `https://bioly.space/${username}`,
       siteName: "Bioly",
       images: [
@@ -48,8 +52,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     },
     twitter: {
       card: "summary_large_image",
-      title: `${displayName} | Bioly`,
-      description: bio,
+      title: title,
+      description: description,
       images: [ogImageUrl],
     },
   };

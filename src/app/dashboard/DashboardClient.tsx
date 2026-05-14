@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import {
-  LayoutDashboard, User, Settings, LogOut, Plus, ExternalLink, Trash2, Menu, X, GripVertical,
+  LayoutDashboard, User, Settings, LogOut, Plus, ExternalLink, Trash2, Menu, X, GripVertical, BarChart2
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -158,6 +158,7 @@ export default function DashboardClient({ initialUser }: { initialUser: any }) {
 
   const navItems = [
     { href: "/dashboard", icon: LayoutDashboard, label: "Links", active: true },
+    { href: "/dashboard/analytics", icon: BarChart2, label: "Analíticas", active: false },
     { href: "/dashboard/profile", icon: User, label: "Perfil y Apariencia", active: false },
     { href: "/dashboard/settings", icon: Settings, label: "Ajustes", active: false },
   ];

@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { PlatformIcon } from "@/components/PlatformIcon";
-import { Share2 } from "lucide-react";
+import { Share2, Mail, Check, Loader2 } from "lucide-react";
 
 // Same mapping as ProfileClient — single source of truth
 const BUTTON_STYLE_MAP: Record<string, string> = {
@@ -25,6 +25,9 @@ interface ProfileViewProps {
 
 export default function ProfileView({ profile, links }: ProfileViewProps) {
   const tracked = useRef(false);
+  const [email, setEmail] = useState("");
+  const [subscribing, setSubscribing] = useState(false);
+  const [subscribeMessage, setSubscribeMessage] = useState({ text: "", isError: false });
 
   // Resolve style classes from profile data
   const btnClass  = BUTTON_STYLE_MAP[profile.button_style ?? "rounded"] ?? "rounded-2xl";
@@ -71,6 +74,28 @@ export default function ProfileView({ profile, links }: ProfileViewProps) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ profile_id: profile.id, event_type: "share" }),
     }).catch(() => {});
+  };
+
+  const handleSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) return;
+    setSubscribing(true);
+    setSubscribeMessage({ text: "", isError: false });
+    try {
+      const res = await fetch("/api/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ profile_id: profile.id, email }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Error al suscribirse");
+      setSubscribeMessage({ text: "¡Suscripción exitosa!", isError: false });
+      setEmail("");
+    } catch (err: any) {
+      setSubscribeMessage({ text: err.message, isError: true });
+    } finally {
+      setSubscribing(false);
+    }
   };
 
   return (
@@ -155,6 +180,46 @@ export default function ProfileView({ profile, links }: ProfileViewProps) {
             <div className="text-center py-10 opacity-40">
               <p className="text-sm italic">Este usuario aún no ha añadido enlaces.</p>
             </div>
+          )}
+        </div>
+
+        {/* Email Collection / Lead Gen */}
+        <div className="w-full mt-10 p-6 bg-white dark:bg-[#111] rounded-3xl border border-[#eeeeee] dark:border-[#222] shadow-sm">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-gray-100 dark:bg-black rounded-lg">
+              <Mail className="w-5 h-5 text-[#111111] dark:text-white" />
+            </div>
+            <div>
+              <h3 className="font-bold text-sm">Suscríbete</h3>
+              <p className="text-xs text-[#666666] dark:text-[#a1a1aa]">Recibe mis últimas actualizaciones.</p>
+            </div>
+          </div>
+          <form onSubmit={handleSubscribe} className="flex gap-2">
+            <input
+              type="email"
+              required
+              placeholder="tu@email.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="flex-1 bg-[#f9fafb] dark:bg-[#0a0a0a] border border-[#eeeeee] dark:border-[#333] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#111] dark:focus:border-white transition-colors"
+            />
+            <button
+              type="submit"
+              disabled={subscribing}
+              className={`px-4 py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center min-w-[100px] ${
+                isOutline 
+                  ? "border-2 border-[#111] dark:border-white text-[#111] dark:text-white hover:bg-[#111] hover:text-white dark:hover:bg-white dark:hover:text-black" 
+                  : "bg-[#111111] dark:bg-white text-white dark:text-black hover:opacity-90"
+              }`}
+            >
+              {subscribing ? <Loader2 className="w-4 h-4 animate-spin" /> : "Suscribirme"}
+            </button>
+          </form>
+          {subscribeMessage.text && (
+            <p className={`mt-3 text-xs font-medium flex items-center gap-1 ${subscribeMessage.isError ? "text-red-500" : "text-emerald-500"}`}>
+              {!subscribeMessage.isError && <Check className="w-3 h-3" />}
+              {subscribeMessage.text}
+            </p>
           )}
         </div>
 
