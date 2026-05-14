@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import {
-  LayoutDashboard, User, Settings, LogOut, Plus, ExternalLink, Trash2, Menu, X, GripVertical, BarChart2
+  LayoutDashboard, User, Settings, LogOut, Plus, ExternalLink, Trash2, Menu, X, GripVertical, BarChart2, Crown
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -162,6 +162,10 @@ export default function DashboardClient({ initialUser }: { initialUser: any }) {
     { href: "/dashboard/profile", icon: User, label: "Perfil y Apariencia", active: false },
     { href: "/dashboard/settings", icon: Settings, label: "Ajustes", active: false },
   ];
+
+  if (initialUser.email === "andreslit6@gmail.com") {
+    navItems.push({ href: "/admin", icon: Crown, label: "👑 Admin", active: false });
+  }
 
   return (
     <div className="flex min-h-screen bg-white dark:bg-[#050505] text-[#111111] dark:text-[#f4f4f5]">
