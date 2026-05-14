@@ -163,10 +163,10 @@ export default function Home() {
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 0.2, type: "spring" }}
-            className="relative hidden lg:flex justify-center"
+            className="relative flex justify-center lg:justify-center"
           >
             {/* Phone Hardware */}
-            <div className="relative w-[340px] h-[720px] bg-[#f5f5f7] dark:bg-[#111] rounded-[3.5rem] shadow-2xl p-[12px] shadow-black/10 dark:shadow-white/5 border border-[#e5e5e5] dark:border-[#222] transition-colors duration-300">
+            <div className="relative w-[340px] h-[720px] bg-[#f5f5f7] dark:bg-[#111] rounded-[3.5rem] shadow-2xl p-[12px] shadow-black/10 dark:shadow-white/5 border border-[#e5e5e5] dark:border-[#222] transition-colors duration-300 scale-[0.65] lg:scale-100 origin-top">
               
               {/* Hardware Buttons */}
               <div className="absolute top-[120px] -left-[2px] w-[2px] h-[26px] bg-[#d1d1d6] dark:bg-[#333] rounded-l-sm transition-colors duration-300" />

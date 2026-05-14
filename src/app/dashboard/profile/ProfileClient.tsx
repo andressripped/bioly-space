@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Monitor, Tablet, Smartphone, Camera, Save, ArrowLeft, Loader2, Copy, Check, ExternalLink } from "lucide-react";
+import { Monitor, Tablet, Smartphone, Camera, Save, ArrowLeft, Loader2, Copy, Check, ExternalLink, Eye, Pencil } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
 import { PlatformIcon } from "@/components/PlatformIcon";
@@ -10,6 +10,7 @@ type Device = "desktop" | "tablet" | "mobile";
 
 export default function ProfileClient({ user }: { user: any }) {
   const [activeDevice, setActiveDevice] = useState<Device>("mobile");
+  const [mobileTab, setMobileTab] = useState<"edit" | "preview">("edit");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -141,10 +142,39 @@ export default function ProfileClient({ user }: { user: any }) {
 
   return (
     <div className="min-h-screen bg-[#fcfcfc] dark:bg-[#050505] text-[#111111] dark:text-[#f4f4f5] transition-colors duration-300">
+
+      {/* MOBILE TAB TOGGLE */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 flex bg-white dark:bg-[#0a0a0a] border-t border-[#eeeeee] dark:border-[#222] shadow-lg">
+        <button
+          onClick={() => setMobileTab("edit")}
+          className={`flex-1 flex items-center justify-center gap-2 py-4 text-sm font-semibold transition-colors ${
+            mobileTab === "edit"
+              ? "text-[#111111] dark:text-white border-t-2 border-[#111111] dark:border-white"
+              : "text-[#999999] border-t-2 border-transparent"
+          }`}
+        >
+          <Pencil className="w-4 h-4" />
+          Editar
+        </button>
+        <button
+          onClick={() => setMobileTab("preview")}
+          className={`flex-1 flex items-center justify-center gap-2 py-4 text-sm font-semibold transition-colors ${
+            mobileTab === "preview"
+              ? "text-[#111111] dark:text-white border-t-2 border-[#111111] dark:border-white"
+              : "text-[#999999] border-t-2 border-transparent"
+          }`}
+        >
+          <Eye className="w-4 h-4" />
+          Preview
+        </button>
+      </div>
+
       <div className="flex h-screen overflow-hidden">
         
         {/* PANEL DE CONFIGURACIÓN (IZQUIERDA) */}
-        <aside className="w-full md:w-[400px] bg-white dark:bg-[#0a0a0a] border-r border-[#eeeeee] dark:border-[#222] overflow-y-auto p-8 shadow-sm z-20">
+        <aside className={`w-full md:w-[400px] bg-white dark:bg-[#0a0a0a] border-r border-[#eeeeee] dark:border-[#222] overflow-y-auto p-8 shadow-sm z-20 pb-24 md:pb-8 ${
+          mobileTab === "edit" ? "flex flex-col" : "hidden md:flex md:flex-col"
+        }`}>
           <div className="flex items-center gap-4 mb-10">
             <Link href="/dashboard" className="p-2 hover:bg-gray-100 dark:hover:bg-[#111] rounded-full transition-colors">
               <ArrowLeft className="w-5 h-5" />
@@ -237,7 +267,9 @@ export default function ProfileClient({ user }: { user: any }) {
         </aside>
 
         {/* PANEL DE PREVISUALIZACIÓN (DERECHA) */}
-        <main className="flex-1 bg-[#f5f5f7] dark:bg-[#000] relative overflow-hidden flex flex-col items-center">
+        <main className={`flex-1 bg-[#f5f5f7] dark:bg-[#000] relative overflow-hidden flex-col items-center ${
+          mobileTab === "preview" ? "flex" : "hidden md:flex"
+        }`}>
           
           <div className="absolute top-8 bg-white/80 dark:bg-[#111]/80 backdrop-blur-md border border-[#eeeeee] dark:border-[#222] rounded-full p-1 flex gap-1 z-10 shadow-sm">
             {(["desktop", "tablet", "mobile"] as Device[]).map((device) => (

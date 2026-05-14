@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { PlatformIcon } from "@/components/PlatformIcon";
 import { Share2 } from "lucide-react";
 
@@ -9,6 +10,38 @@ interface ProfileViewProps {
 }
 
 export default function ProfileView({ profile, links }: ProfileViewProps) {
+  const tracked = useRef(false);
+
+  // Track page view (only once)
+  useEffect(() => {
+    if (tracked.current) return;
+    tracked.current = true;
+
+    fetch("/api/track", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        profile_id: profile.id,
+        event_type: "page_view",
+        referrer: document.referrer ? new URL(document.referrer).hostname : "direct",
+      }),
+    }).catch(() => {});
+  }, [profile.id]);
+
+  const handleLinkClick = (link: any) => {
+    // Fire and forget — tracking before navigation
+    fetch("/api/track", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        profile_id: profile.id,
+        link_id: link.id,
+        event_type: "link_click",
+        referrer: document.referrer ? new URL(document.referrer).hostname : "direct",
+      }),
+    }).catch(() => {});
+  };
+
   const handleShare = () => {
     if (navigator.share) {
       navigator.share({
@@ -18,29 +51,39 @@ export default function ProfileView({ profile, links }: ProfileViewProps) {
       });
     } else {
       navigator.clipboard.writeText(window.location.href);
-      alert("¡Enlace copiado al portapapeles!");
+      // Simple visual feedback without alert
     }
+
+    // Track share event
+    fetch("/api/track", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        profile_id: profile.id,
+        event_type: "share",
+      }),
+    }).catch(() => {});
   };
 
   return (
     <div className="min-h-screen flex flex-col items-center bg-[#fcfcfc] dark:bg-[#050505] text-[#111111] dark:text-[#f4f4f5] selection:bg-black selection:text-white dark:selection:bg-white dark:selection:text-black">
       
-      {/* HEADER / BANNER AREA */}
-      <div 
-        className="w-full h-40 sm:h-52 transition-colors duration-1000" 
+      {/* HEADER / BANNER */}
+      <div
+        className="w-full h-40 sm:h-52 transition-colors duration-1000"
         style={{ backgroundColor: profile.theme_color || "#111111" }}
-      ></div>
+      />
 
-      {/* CONTENT AREA */}
+      {/* CONTENT */}
       <main className="w-full max-w-xl px-6 -mt-16 sm:-mt-20 pb-20 flex flex-col items-center">
         
         {/* AVATAR */}
         <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-full p-1.5 bg-[#fcfcfc] dark:bg-[#050505] shadow-2xl mb-6 relative">
           <div className="w-full h-full rounded-full overflow-hidden bg-gray-100 dark:bg-[#111] border border-black/5 dark:border-white/5">
             {profile.avatar_url ? (
-              <img 
-                src={profile.avatar_url} 
-                alt={profile.display_name} 
+              <img
+                src={profile.avatar_url}
+                alt={profile.display_name}
                 className="w-full h-full object-cover"
               />
             ) : (
@@ -49,9 +92,10 @@ export default function ProfileView({ profile, links }: ProfileViewProps) {
               </div>
             )}
           </div>
-          
-          <button 
+
+          <button
             onClick={handleShare}
+            title="Compartir"
             className="absolute bottom-2 right-2 p-3 bg-white dark:bg-[#111] rounded-full shadow-xl border border-[#eeeeee] dark:border-[#222] hover:scale-110 active:scale-95 transition-all"
           >
             <Share2 className="w-5 h-5 text-[#111111] dark:text-white" />
@@ -68,7 +112,7 @@ export default function ProfileView({ profile, links }: ProfileViewProps) {
           </p>
         </div>
 
-        {/* LINKS GRID */}
+        {/* LINKS */}
         <div className="w-full space-y-4">
           {links.map((link) => (
             <a
@@ -76,15 +120,16 @@ export default function ProfileView({ profile, links }: ProfileViewProps) {
               href={link.url}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => handleLinkClick(link)}
               className="group relative flex items-center p-4 sm:p-5 bg-white dark:bg-[#0a0a0a] border border-[#eeeeee] dark:border-[#222] rounded-[2rem] hover:border-[#111111] dark:hover:border-white hover:shadow-2xl hover:shadow-black/5 dark:hover:shadow-white/5 transition-all duration-300 hover:-translate-y-1 active:scale-[0.98]"
             >
               <div className="w-12 h-12 flex items-center justify-center bg-[#f9fafb] dark:bg-[#111] rounded-2xl border border-[#eeeeee] dark:border-[#222] group-hover:bg-[#111111] dark:group-hover:bg-white transition-colors">
-                <PlatformIcon 
-                  id={link.icon} 
-                  className="w-6 h-6 text-[#111111] dark:text-white group-hover:text-white dark:group-hover:text-black transition-colors" 
+                <PlatformIcon
+                  id={link.icon}
+                  className="w-6 h-6 text-[#111111] dark:text-white group-hover:text-white dark:group-hover:text-black transition-colors"
                 />
               </div>
-              
+
               <div className="flex-1 ml-4 text-left">
                 <h3 className="font-bold text-lg text-[#111111] dark:text-white tracking-tight">{link.title}</h3>
               </div>
@@ -106,15 +151,14 @@ export default function ProfileView({ profile, links }: ProfileViewProps) {
 
         {/* FOOTER */}
         <footer className="mt-20 flex flex-col items-center gap-4">
-          <a 
-            href="/" 
+          <a
+            href="/"
             className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-[#111] rounded-full text-[10px] font-bold uppercase tracking-widest text-[#999999] hover:text-[#111111] dark:hover:text-white transition-colors border border-[#eeeeee] dark:border-[#222]"
           >
             <span>Creado con</span>
             <span className="text-[#111111] dark:text-white">Bioly</span>
           </a>
         </footer>
-
       </main>
     </div>
   );
