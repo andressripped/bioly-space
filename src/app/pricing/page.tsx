@@ -1,7 +1,15 @@
+"use client";
+
 import Link from "next/link";
 import { Check } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
+import { useState, useEffect } from "react";
+import { Loader2 } from "lucide-react";
+import { createClient } from "@/utils/supabase/client";
+
+export const LEMONSQUEEZY_PRO_VARIANT_ID = process.env.NEXT_PUBLIC_LEMONSQUEEZY_PRO_VARIANT_ID || "variant_pro_placeholder";
+export const LEMONSQUEEZY_BUSINESS_VARIANT_ID = process.env.NEXT_PUBLIC_LEMONSQUEEZY_BUSINESS_VARIANT_ID || "variant_business_placeholder";
 
 const tiers = [
   {
@@ -22,7 +30,8 @@ const tiers = [
   {
     name: "Pro",
     id: "tier-pro",
-    href: "/dashboard", // Luego lo conectaremos a Stripe
+    href: "#",
+    variantId: LEMONSQUEEZY_PRO_VARIANT_ID,
     priceMonthly: "$8",
     description: "Para creadores que quieren estética y datos reales.",
     features: [
@@ -40,7 +49,8 @@ const tiers = [
   {
     name: "Business",
     id: "tier-business",
-    href: "/dashboard", // Luego lo conectaremos a Stripe
+    href: "#",
+    variantId: LEMONSQUEEZY_BUSINESS_VARIANT_ID,
     priceMonthly: "$24",
     description: "Para marcas y negocios que necesitan control total.",
     features: [
@@ -56,6 +66,58 @@ const tiers = [
 ];
 
 export default function PricingPage() {
+  const [loadingTier, setLoadingTier] = useState<string | null>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
+  const supabase = createClient();
+
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setIsLoggedIn(!!session);
+    };
+    checkUser();
+  }, []);
+
+  const handleSubscribe = async (tier: any) => {
+    if (!isLoggedIn && tier.name !== "Free") {
+      window.location.href = `/login?redirect=/pricing`;
+      return;
+    }
+
+    if (tier.name === "Free") {
+      window.location.href = tier.href;
+      return;
+    }
+
+    setLoadingTier(tier.id);
+    try {
+      const response = await fetch("/api/lemonsqueezy/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          variantId: tier.variantId,
+          tier: tier.name.toLowerCase(),
+        }),
+      });
+
+      if (response.status === 401) {
+        // Redirigir al login si no está autenticado
+        window.location.href = `/login?redirect=/pricing`;
+        return;
+      }
+
+      const { url } = await response.json();
+      if (url) {
+        window.location.href = url; // Redirige a Lemon Squeezy
+      }
+    } catch (error) {
+      console.error("Error al iniciar checkout", error);
+      alert("Hubo un error al iniciar el proceso de pago.");
+    } finally {
+      setLoadingTier(null);
+    }
+  };
+
   return (
     <div className="bg-white dark:bg-[#050505]">
       <Navbar />
@@ -106,17 +168,24 @@ export default function PricingPage() {
                     /mes
                   </span>
                 </p>
-                <Link
-                  href={tier.href}
+                <button
+                  onClick={() => handleSubscribe(tier)}
+                  disabled={loadingTier === tier.id}
                   aria-describedby={tier.id}
-                  className={`mt-6 block rounded-xl py-3 px-3 text-center text-sm font-bold leading-6 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 transition-all ${
+                  className={`mt-6 w-full flex items-center justify-center rounded-xl py-3 px-3 text-center text-sm font-bold leading-6 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 transition-all ${
                     tier.mostPopular
                       ? "bg-emerald-500 text-white shadow-sm hover:bg-emerald-600 focus-visible:outline-emerald-500"
                       : "bg-[#111] dark:bg-white text-white dark:text-black hover:opacity-90 ring-1 ring-inset ring-[#111] dark:ring-white"
-                  }`}
+                  } disabled:opacity-50`}
                 >
-                  Empezar ahora
-                </Link>
+                  {loadingTier === tier.id ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : isLoggedIn === false && tier.name !== "Free" ? (
+                    "Inicia sesión para comprar"
+                  ) : (
+                    "Empezar ahora"
+                  )}
+                </button>
                 <ul
                   role="list"
                   className={`mt-8 space-y-3 text-sm leading-6 xl:mt-10 ${
