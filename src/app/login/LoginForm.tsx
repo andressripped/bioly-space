@@ -25,12 +25,15 @@ function LoginFormInner() {
       localStorage.setItem("pending_username", username);
     }
 
-    const redirectParam = searchParams.get("redirect") || "/dashboard";
+    const redirectParam = searchParams.get("redirect");
+    if (redirectParam) {
+      document.cookie = `post_login_redirect=${redirectParam}; path=/; max-age=300`;
+    }
 
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(redirectParam)}`,
+        redirectTo: `${window.location.origin}/auth/callback`,
       },
     });
 

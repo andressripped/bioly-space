@@ -5,8 +5,11 @@ import { NextResponse } from 'next/server'
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
-  // if "next" is in search params, use it as the redirection URL after successful sign in
-  const next = searchParams.get('next') ?? '/dashboard'
+  const cookieStore = await cookies()
+  const postLoginRedirect = cookieStore.get('post_login_redirect')?.value
+  
+  // Prioridad: 1. Cookie guardada, 2. Parámetro "next", 3. Dashboard por defecto
+  const next = postLoginRedirect || searchParams.get('next') || '/dashboard'
 
   if (code) {
     const cookieStore = await cookies()
@@ -46,6 +49,9 @@ export async function GET(request: Request) {
           return NextResponse.redirect(`${origin}/onboarding`)
         }
       }
+      // Limpiar la cookie de redirección
+      cookieStore.delete('post_login_redirect')
+      
       return NextResponse.redirect(`${origin}${next}`)
     }
     
