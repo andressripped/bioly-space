@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { 
-  X, Link as LinkIcon, Type, Globe, Search, PlusCircle, Loader2
+  X, Link as LinkIcon, Type, Globe, Search, PlusCircle, Loader2, ImagePlus
 } from "lucide-react";
 import { 
   SiInstagram, SiYoutube, SiTiktok, SiX, SiFacebook, 
@@ -54,6 +54,8 @@ export function AddLinkModal({ isOpen, onClose, onSuccess }: AddLinkModalProps) 
   const [searchTerm, setSearchTerm] = useState("");
   const [isSocial, setIsSocial] = useState(false);
   const [thumbnailUrl, setThumbnailUrl] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const supabase = createClient();
 
@@ -62,6 +64,28 @@ export function AddLinkModal({ isOpen, onClose, onSuccess }: AddLinkModalProps) 
   }, [searchTerm]);
 
   if (!isOpen) return null;
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setIsUploading(true);
+      setError(null);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No estás autenticado");
+
+      const ext = file.name.split(".").pop();
+      const path = `avatars/${user.id}-link-${Date.now()}.${ext}`;
+      const { error: uploadErr } = await supabase.storage.from("avatars").upload(path, file, { upsert: true });
+      if (uploadErr) throw uploadErr;
+      const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(path);
+      setThumbnailUrl(publicUrl);
+    } catch (err: any) {
+      setError("Error al subir imagen: " + err.message);
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -235,15 +259,27 @@ export function AddLinkModal({ isOpen, onClose, onSuccess }: AddLinkModalProps) 
               {!isSocial && (
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-widest text-[#999999] mb-2 ml-1">
-                    URL de la Imagen (Para Tarjetas)
+                    Imagen (Para Tarjetas)
                   </label>
-                  <input
-                    type="url"
-                    value={thumbnailUrl}
-                    onChange={(e) => setThumbnailUrl(e.target.value)}
-                    className="w-full bg-[#f9fafb] dark:bg-[#111] border border-[#eeeeee] dark:border-[#222] rounded-2xl py-4 px-4 text-[#111111] dark:text-white focus:outline-none focus:border-[#111111] dark:focus:border-white transition-all text-sm font-medium"
-                    placeholder="https://ejemplo.com/imagen.jpg (Opcional)"
-                  />
+                  <div className="flex gap-2 items-center">
+                    <input
+                      type="url"
+                      value={thumbnailUrl}
+                      onChange={(e) => setThumbnailUrl(e.target.value)}
+                      className="flex-1 bg-[#f9fafb] dark:bg-[#111] border border-[#eeeeee] dark:border-[#222] rounded-2xl py-4 px-4 text-[#111111] dark:text-white focus:outline-none focus:border-[#111111] dark:focus:border-white transition-all text-sm font-medium"
+                      placeholder="URL o subir archivo..."
+                    />
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isUploading}
+                      className="h-[54px] px-6 bg-gray-100 dark:bg-[#222] hover:bg-gray-200 dark:hover:bg-[#333] border border-[#eeeeee] dark:border-[#333] rounded-2xl flex items-center justify-center transition-colors disabled:opacity-50"
+                      title="Subir imagen"
+                    >
+                      {isUploading ? <Loader2 className="w-5 h-5 text-[#111111] dark:text-white animate-spin" /> : <ImagePlus className="w-5 h-5 text-[#111111] dark:text-white" />}
+                    </button>
+                    <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleImageUpload} />
+                  </div>
                 </div>
               )}
             </div>
