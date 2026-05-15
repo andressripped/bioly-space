@@ -15,6 +15,7 @@ import {
   PieChart,
   Pie,
   Cell,
+  LabelList,
 } from "recharts";
 import { Eye, MousePointerClick, TrendingUp, Users, Mail, Lock, Calendar } from "lucide-react";
 
@@ -217,12 +218,17 @@ export default function AnalyticsClient({ rawData, links, subscribers, plan }: A
         <div className="h-[250px] w-full">
           {linkPerformance.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={linkPerformance} layout="vertical" margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#eeeeee" />
+              <BarChart data={linkPerformance} layout="vertical" margin={{ top: 0, right: 30, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#333333" strokeOpacity={0.2} />
                 <XAxis type="number" hide />
-                <YAxis dataKey="title" type="category" axisLine={false} tickLine={false} width={150} tick={{ fontSize: 13, fill: '#555' }} />
-                <Tooltip cursor={{ fill: '#f9fafb' }} contentStyle={{ borderRadius: '12px' }} />
-                <Bar dataKey="clicks" name="Clicks" fill="#111111" radius={[0, 8, 8, 0]} barSize={32} />
+                <YAxis dataKey="title" type="category" axisLine={false} tickLine={false} width={120} tick={{ fontSize: 13, fill: '#888' }} />
+                <Tooltip 
+                  cursor={{ fill: 'rgba(150, 150, 150, 0.1)' }} 
+                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.1)', background: '#fff', color: '#111' }} 
+                />
+                <Bar dataKey="clicks" name="Clicks" fill="#10b981" radius={[0, 8, 8, 0]} barSize={24}>
+                  <LabelList dataKey="clicks" position="right" fill="#888" fontSize={12} />
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           ) : (
