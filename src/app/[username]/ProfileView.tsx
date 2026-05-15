@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { PlatformIcon } from "@/components/PlatformIcon";
 import { Share2, Mail, Check, Loader2 } from "lucide-react";
 import { FONT_CLASSES } from "@/lib/fonts";
+import { renderWithAppleEmojis } from "@/utils/emoji";
 
 // Same mapping as ProfileClient — single source of truth
 const BUTTON_STYLE_MAP: Record<string, string> = {
@@ -150,12 +151,12 @@ export default function ProfileView({ profile, links }: ProfileViewProps) {
 
         {/* Name & Bio */}
         <div className="text-center mb-10 space-y-2">
-          <h1 className={`text-3xl sm:text-4xl font-bold tracking-tight ${bgType === "image_fade" ? "text-white drop-shadow-md" : "text-[#111111] dark:text-white"}`}>
-            {profile.display_name || profile.username}
+          <h1 className={`text-3xl sm:text-4xl font-bold tracking-tight flex items-center justify-center flex-wrap gap-1 ${bgType === "image_fade" ? "text-white drop-shadow-md" : "text-[#111111] dark:text-white"}`}>
+            {renderWithAppleEmojis(profile.display_name || profile.username)}
           </h1>
-          <p className={`text-base max-w-md mx-auto leading-relaxed ${bgType === "image_fade" ? "text-gray-200" : "text-[#666666] dark:text-[#a1a1aa]"}`}>
-            {profile.bio || "Bienvenido a mi espacio digital."}
-          </p>
+          <div className={`text-base max-w-md mx-auto leading-relaxed flex items-center justify-center flex-wrap gap-0.5 ${bgType === "image_fade" ? "text-gray-200" : "text-[#666666] dark:text-[#a1a1aa]"}`}>
+            {renderWithAppleEmojis(profile.bio || "Bienvenido a mi espacio digital.")}
+          </div>
         </div>
 
         {/* SOCIAL BUBBLES */}
@@ -168,9 +169,9 @@ export default function ProfileView({ profile, links }: ProfileViewProps) {
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => handleLinkClick(link)}
-                className="w-12 h-12 rounded-full flex items-center justify-center transition-transform hover:scale-110 shadow-lg border border-black/5 dark:border-white/10"
+                className="relative w-12 h-12 flex-shrink-0 rounded-full flex items-center justify-center transition-transform hover:scale-110 shadow-lg border border-black/5 dark:border-white/10 overflow-hidden"
                 style={{
-                  background: link.icon === 'instagram' ? 'radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%)'
+                  background: link.icon === 'instagram' ? 'linear-gradient(45deg, #ffe17d 0%, #fa9137 20%, #eb4141 40%, #c43aee 70%, #4c64d3 100%)'
                     : link.icon === 'tiktok' ? '#000000'
                     : link.icon === 'snapchat' ? '#FFFC00'
                     : link.icon === 'youtube' ? '#FF0000'
@@ -179,6 +180,8 @@ export default function ProfileView({ profile, links }: ProfileViewProps) {
                     : link.icon === 'facebook' ? '#1877F2'
                     : link.icon === 'twitter' ? '#000000'
                     : themeColor,
+                  backgroundSize: '120% 120%',
+                  backgroundPosition: 'center',
                   color: link.icon === 'snapchat' ? '#000' : '#fff'
                 }}
               >
@@ -265,19 +268,19 @@ export default function ProfileView({ profile, links }: ProfileViewProps) {
               <p className="text-xs text-[#666666] dark:text-[#a1a1aa]">Recibe mis últimas actualizaciones.</p>
             </div>
           </div>
-          <form onSubmit={handleSubscribe} className="flex gap-2">
+          <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-2">
             <input
               type="email"
               required
               placeholder="tu@email.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="flex-1 bg-[#f9fafb] dark:bg-[#0a0a0a] border border-[#eeeeee] dark:border-[#333] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#111] dark:focus:border-white transition-colors"
+              className="w-full sm:flex-1 bg-[#f9fafb] dark:bg-[#0a0a0a] border border-[#eeeeee] dark:border-[#333] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#111] dark:focus:border-white transition-colors"
             />
             <button
               type="submit"
               disabled={subscribing}
-              className={`px-4 py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center min-w-[100px] ${
+              className={`w-full sm:w-auto px-4 py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center min-w-[100px] ${
                 isOutline 
                   ? "border-2 border-[#111] dark:border-white text-[#111] dark:text-white hover:bg-[#111] hover:text-white dark:hover:bg-white dark:hover:text-black" 
                   : "bg-[#111111] dark:bg-white text-white dark:text-black hover:opacity-90"

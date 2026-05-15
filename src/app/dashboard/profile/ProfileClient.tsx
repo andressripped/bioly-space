@@ -12,6 +12,7 @@ import { QRCodeCanvas } from "qrcode.react";
 import UpgradeModal from "@/components/UpgradeModal";
 import { BIOLY_TEMPLATES, TemplateConfig } from "@/lib/templates";
 import { FONT_OPTIONS, FONT_CLASSES } from "@/lib/fonts";
+import { renderWithAppleEmojis } from "@/utils/emoji";
 
 type Device = "desktop" | "tablet" | "mobile";
 
@@ -678,8 +679,12 @@ export default function ProfileClient({ user }: { user: any }) {
                     </div>
                   </div>
 
-                  <h2 className="text-lg font-bold dark:text-white mb-1">{displayName || "Tu Nombre"}</h2>
-                  <p className="text-xs text-[#555555] dark:text-[#a1a1aa] mb-6 leading-relaxed">{bio || "Tu biografía..."}</p>
+                  <h2 className="text-lg font-bold dark:text-white mb-1 flex items-center justify-center flex-wrap gap-1">
+                    {renderWithAppleEmojis(displayName || "Tu Nombre")}
+                  </h2>
+                  <div className="text-xs text-[#555555] dark:text-[#a1a1aa] mb-6 leading-relaxed flex items-center justify-center flex-wrap gap-0.5">
+                    {renderWithAppleEmojis(bio || "Tu biografía...")}
+                  </div>
 
                   {/* SOCIAL BUBBLES */}
                   {socialLinks.length > 0 && (
@@ -687,9 +692,9 @@ export default function ProfileClient({ user }: { user: any }) {
                       {socialLinks.map((link) => (
                         <div
                           key={link.id}
-                          className="w-10 h-10 rounded-full flex items-center justify-center transition-transform hover:scale-110 shadow-lg border border-black/5 dark:border-white/10"
+                          className="relative w-10 h-10 flex-shrink-0 rounded-full flex items-center justify-center transition-transform hover:scale-110 shadow-lg border border-black/5 dark:border-white/10 overflow-hidden"
                           style={{
-                            background: link.icon === 'instagram' ? 'radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%)'
+                            background: link.icon === 'instagram' ? 'linear-gradient(45deg, #ffe17d 0%, #fa9137 20%, #eb4141 40%, #c43aee 70%, #4c64d3 100%)'
                               : link.icon === 'tiktok' ? '#000000'
                               : link.icon === 'snapchat' ? '#FFFC00'
                               : link.icon === 'youtube' ? '#FF0000'
@@ -698,6 +703,8 @@ export default function ProfileClient({ user }: { user: any }) {
                               : link.icon === 'facebook' ? '#1877F2'
                               : link.icon === 'twitter' ? '#000000'
                               : themeColor,
+                            backgroundSize: '120% 120%',
+                            backgroundPosition: 'center',
                             color: link.icon === 'snapchat' ? '#000' : '#fff'
                           }}
                         >
