@@ -27,6 +27,8 @@ export async function POST(req: Request) {
       return new Response("Store ID is missing", { status: 500 });
     }
 
+    const origin = req.headers.get("origin") || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+
     // Crear sesión de checkout en Lemon Squeezy
     const { data, error } = await createCheckout(storeId, variantId, {
       checkoutData: {
@@ -37,7 +39,7 @@ export async function POST(req: Request) {
         },
       },
       productOptions: {
-        redirectUrl: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/dashboard?success=true`,
+        redirectUrl: `${origin}/dashboard?success=true`,
       },
     });
 
