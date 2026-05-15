@@ -13,7 +13,7 @@ export default async function AnalyticsPage() {
   // 1. Get profile
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id")
+    .select("id, plan")
     .eq("id", user.id)
     .single();
 
@@ -22,13 +22,23 @@ export default async function AnalyticsPage() {
   }
 
   // 2. Fetch all analytics for this profile
-  // In a real app, you'd filter by date range. For now, fetch all or limit to 1000.
-  const { data: analyticsData } = await supabase
+  let analyticsQuery = supabase
     .from("analytics")
     .select("*")
     .eq("profile_id", profile.id)
-    .order("created_at", { ascending: false })
-    .limit(1000);
+    .order("created_at", { ascending: false });
+
+  if (!profile.plan || profile.plan === "free") {
+    // Free: Solo últimos 7 días
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    analyticsQuery = analyticsQuery.gte("created_at", sevenDaysAgo.toISOString());
+  } else {
+    // Pro/Business: Histórico completo (limitamos a 5000 por rendimiento)
+    analyticsQuery = analyticsQuery.limit(5000);
+  }
+
+  const { data: analyticsData } = await analyticsQuery;
 
   // 3. Fetch links to map link_id to title
   const { data: links } = await supabase
@@ -54,7 +64,12 @@ export default async function AnalyticsPage() {
         </p>
       </div>
 
-      <AnalyticsClient rawData={analyticsData || []} links={links || []} subscribers={subscribers || []} />
+      <AnalyticsClient 
+        rawData={analyticsData || []} 
+        links={links || []} 
+        subscribers={subscribers || []} 
+        plan={profile.plan || "free"}
+      />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import UpgradeModal from "@/components/UpgradeModal";
 import {
   AreaChart,
   Area,
@@ -11,37 +12,50 @@ import {
   ResponsiveContainer,
   BarChart,
   Bar,
+  PieChart,
+  Pie,
+  Cell,
 } from "recharts";
-import { Eye, MousePointerClick, TrendingUp, Users, Mail } from "lucide-react";
+import { Eye, MousePointerClick, TrendingUp, Users, Mail, Lock, Calendar } from "lucide-react";
+
+const COLORS = ['#111111', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'];
 
 interface AnalyticsClientProps {
   rawData: any[];
   links: any[];
   subscribers: any[];
+  plan: string;
 }
 
-export default function AnalyticsClient({ rawData, links, subscribers }: AnalyticsClientProps) {
-  // Procesar datos para KPI Cards
-  const pageViews = rawData.filter((e) => e.event_type === "page_view").length;
-  const linkClicks = rawData.filter((e) => e.event_type === "link_click").length;
-  const shares = rawData.filter((e) => e.event_type === "share").length;
-  
-  // Calcular CTR general
+export default function AnalyticsClient({ rawData, links, subscribers, plan }: AnalyticsClientProps) {
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [timeRange, setTimeRange] = useState<7 | 30>(7);
+
+  // Filtrar datos según el rango de tiempo seleccionado
+  const filteredData = useMemo(() => {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - timeRange);
+    return rawData.filter(e => new Date(e.created_at) >= cutoff);
+  }, [rawData, timeRange]);
+
+  // Recalcular KPIs basados en el filtro
+  const pageViews = filteredData.filter((e) => e.event_type === "page_view").length;
+  const linkClicks = filteredData.filter((e) => e.event_type === "link_click").length;
+  const shares = filteredData.filter((e) => e.event_type === "share").length;
   const ctr = pageViews > 0 ? ((linkClicks / pageViews) * 100).toFixed(1) : "0.0";
 
-  // Agrupar por fecha para la gráfica de área (últimos 7 días)
+  // Agrupar por fecha para la gráfica de área
   const chartData = useMemo(() => {
     const dataByDate: Record<string, { date: string; views: number; clicks: number }> = {};
     
-    // Inicializar últimos 7 días
-    for (let i = 6; i >= 0; i--) {
+    for (let i = timeRange - 1; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
       const dateStr = d.toISOString().split("T")[0];
       dataByDate[dateStr] = { date: dateStr, views: 0, clicks: 0 };
     }
 
-    rawData.forEach((event) => {
+    filteredData.forEach((event) => {
       const dateStr = new Date(event.created_at).toISOString().split("T")[0];
       if (dataByDate[dateStr]) {
         if (event.event_type === "page_view") dataByDate[dateStr].views += 1;
@@ -51,10 +65,45 @@ export default function AnalyticsClient({ rawData, links, subscribers }: Analyti
 
     return Object.values(dataByDate).map(item => ({
       ...item,
-      // Formato corto para el eje X
       dateShort: new Date(item.date).toLocaleDateString("es-ES", { day: '2-digit', month: 'short' })
     }));
-  }, [rawData]);
+  }, [filteredData, timeRange]);
+
+  // Agrupar clicks por link
+  const linkPerformance = useMemo(() => {
+    const clicksByLink: Record<string, number> = {};
+    filteredData.filter(e => e.event_type === "link_click").forEach(event => {
+      if (event.link_id) {
+        clicksByLink[event.link_id] = (clicksByLink[event.link_id] || 0) + 1;
+      }
+    });
+
+    return links.map(link => ({
+      title: link.title,
+      clicks: clicksByLink[link.id] || 0
+    })).sort((a, b) => b.clicks - a.clicks).slice(0, 5);
+  }, [filteredData, links]);
+
+  // Agrupar dispositivos
+  const deviceData = useMemo(() => {
+    const counts: Record<string, number> = {};
+    filteredData.filter(e => e.event_type === "page_view").forEach(e => {
+      const dev = e.device || "unknown";
+      counts[dev] = (counts[dev] || 0) + 1;
+    });
+    return Object.entries(counts).map(([name, value]) => ({ name, value }));
+  }, [filteredData]);
+
+  // Agrupar navegadores
+  const browserData = useMemo(() => {
+    const counts: Record<string, number> = {};
+    filteredData.filter(e => e.event_type === "page_view").forEach(e => {
+      const browser = e.browser || "unknown";
+      counts[browser] = (counts[browser] || 0) + 1;
+    });
+    return Object.entries(counts).map(([name, value]) => ({ name, value }));
+  }, [filteredData]);
+
 
   // Agrupar clicks por link
   const linkPerformance = useMemo(() => {
@@ -108,9 +157,34 @@ export default function AnalyticsClient({ rawData, links, subscribers }: Analyti
         </div>
       </div>
 
+      {/* CONTROLES DE TIEMPO */}
+      <div className="flex items-center justify-end">
+        <div className="bg-gray-100 dark:bg-[#111] p-1 rounded-xl inline-flex">
+          <button 
+            onClick={() => setTimeRange(7)}
+            className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all ${timeRange === 7 ? "bg-white dark:bg-[#222] shadow-sm text-black dark:text-white" : "text-[#555] hover:text-black dark:hover:text-white"}`}
+          >
+            7 días
+          </button>
+          <button 
+            onClick={() => {
+              if (plan === "free") {
+                setShowUpgradeModal(true);
+                return;
+              }
+              setTimeRange(30);
+            }}
+            className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all flex items-center gap-2 ${timeRange === 30 ? "bg-white dark:bg-[#222] shadow-sm text-black dark:text-white" : "text-[#555] hover:text-black dark:hover:text-white"}`}
+          >
+            {plan === "free" && <Lock className="w-3 h-3 text-emerald-500" />}
+            30 días
+          </button>
+        </div>
+      </div>
+
       {/* GRÁFICA PRINCIPAL */}
       <div className="bg-white dark:bg-[#111] p-6 lg:p-8 rounded-3xl border border-[#eeeeee] dark:border-[#222] shadow-sm">
-        <h3 className="text-lg font-bold mb-6">Tráfico de los últimos 7 días</h3>
+        <h3 className="text-lg font-bold mb-6">Tráfico de los últimos {timeRange} días</h3>
         <div className="h-[300px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
@@ -159,13 +233,96 @@ export default function AnalyticsClient({ rawData, links, subscribers }: Analyti
         </div>
       </div>
 
+      {/* GRÁFICOS DE PASTEL (DISPOSITIVOS Y NAVEGADORES) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="bg-white dark:bg-[#111] p-6 lg:p-8 rounded-3xl border border-[#eeeeee] dark:border-[#222] shadow-sm">
+          <h3 className="text-lg font-bold mb-6">Dispositivos</h3>
+          <div className="h-[250px] w-full">
+            {deviceData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={deviceData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={80}
+                    paddingAngle={5}
+                    dataKey="value"
+                  >
+                    {deviceData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip contentStyle={{ borderRadius: '12px' }} />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-[#999999]">Sin datos</div>
+            )}
+          </div>
+          <div className="flex flex-wrap justify-center gap-4 mt-4">
+            {deviceData.map((entry, index) => (
+              <div key={entry.name} className="flex items-center gap-2 text-sm text-[#555] dark:text-[#a1a1aa]">
+                <span className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }}></span>
+                <span className="capitalize">{entry.name}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-[#111] p-6 lg:p-8 rounded-3xl border border-[#eeeeee] dark:border-[#222] shadow-sm">
+          <h3 className="text-lg font-bold mb-6">Navegadores</h3>
+          <div className="h-[250px] w-full">
+            {browserData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={browserData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={80}
+                    paddingAngle={5}
+                    dataKey="value"
+                  >
+                    {browserData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip contentStyle={{ borderRadius: '12px' }} />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-[#999999]">Sin datos</div>
+            )}
+          </div>
+          <div className="flex flex-wrap justify-center gap-4 mt-4">
+            {browserData.map((entry, index) => (
+              <div key={entry.name} className="flex items-center gap-2 text-sm text-[#555] dark:text-[#a1a1aa]">
+                <span className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }}></span>
+                <span className="capitalize">{entry.name}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
       {/* AUDIENCIA / SUSCRIPTORES */}
       <div className="bg-white dark:bg-[#111] p-6 lg:p-8 rounded-3xl border border-[#eeeeee] dark:border-[#222] shadow-sm">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-lg font-bold">Suscriptores ({subscribers.length})</h3>
           <button 
-            className="text-xs font-bold uppercase tracking-widest text-[#555] hover:text-[#111] dark:text-[#a1a1aa] dark:hover:text-white transition-colors"
+            className={`text-xs font-bold uppercase tracking-widest transition-colors flex items-center gap-2 ${
+              plan === "business" 
+                ? "text-[#555] hover:text-[#111] dark:text-[#a1a1aa] dark:hover:text-white" 
+                : "text-emerald-600 dark:text-emerald-500 hover:opacity-80"
+            }`}
             onClick={() => {
+              if (plan !== "business") {
+                setShowUpgradeModal(true);
+                return;
+              }
               const csvContent = "data:text/csv;charset=utf-8," + "Email,Fecha\n" + subscribers.map(s => `${s.email},${new Date(s.created_at).toLocaleDateString()}`).join("\n");
               const encodedUri = encodeURI(csvContent);
               const link = document.createElement("a");
@@ -176,6 +333,7 @@ export default function AnalyticsClient({ rawData, links, subscribers }: Analyti
               document.body.removeChild(link);
             }}
           >
+            {plan !== "business" && <Lock className="w-3 h-3" />}
             Exportar CSV
           </button>
         </div>
@@ -206,6 +364,12 @@ export default function AnalyticsClient({ rawData, links, subscribers }: Analyti
           </div>
         )}
       </div>
+
+      <UpgradeModal 
+        isOpen={showUpgradeModal} 
+        onClose={() => setShowUpgradeModal(false)} 
+        featureName="Exportar Suscriptores" 
+      />
     </div>
   );
 }
