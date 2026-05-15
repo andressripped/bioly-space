@@ -106,21 +106,6 @@ export default function AnalyticsClient({ rawData, links, subscribers, plan }: A
   }, [filteredData]);
 
 
-  // Agrupar clicks por link
-  const linkPerformance = useMemo(() => {
-    const clicksByLink: Record<string, number> = {};
-    rawData.filter(e => e.event_type === "link_click").forEach(event => {
-      if (event.link_id) {
-        clicksByLink[event.link_id] = (clicksByLink[event.link_id] || 0) + 1;
-      }
-    });
-
-    return links.map(link => ({
-      title: link.title,
-      clicks: clicksByLink[link.id] || 0
-    })).sort((a, b) => b.clicks - a.clicks).slice(0, 5); // Top 5
-  }, [rawData, links]);
-
   return (
     <div className="space-y-8">
       {/* KPI CARDS */}
