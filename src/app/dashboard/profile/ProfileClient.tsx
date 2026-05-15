@@ -9,6 +9,7 @@ import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
 import { PlatformIcon } from "@/components/PlatformIcon";
 import { QRCodeCanvas } from "qrcode.react";
+import UpgradeModal from "@/components/UpgradeModal";
 
 type Device = "desktop" | "tablet" | "mobile";
 
@@ -62,6 +63,11 @@ export default function ProfileClient({ user }: { user: any }) {
   const [avatarUrl, setAvatarUrl]       = useState<string | null>(null);
   const [seoTitle, setSeoTitle]         = useState("");
   const [seoDescription, setSeoDescription] = useState("");
+  
+  // Premium
+  const [userPlan, setUserPlan] = useState("free");
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
+  const [upgradeFeatureName, setUpgradeFeatureName] = useState("");
 
   // Appearance
   const [themeColor, setThemeColor]     = useState("#111111");
@@ -92,6 +98,7 @@ export default function ProfileClient({ user }: { user: any }) {
           setFontFamily(profile.font_family || "inter");
           setSeoTitle(profile.seo_title || "");
           setSeoDescription(profile.seo_description || "");
+          setUserPlan(profile.plan || "free");
           if (profile.username) setUsername(profile.username);
         } else {
           setDisplayName(user.user_metadata?.full_name || "");
@@ -163,6 +170,15 @@ export default function ProfileClient({ user }: { user: any }) {
     navigator.clipboard.writeText(`${window.location.origin}/${username}`);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handlePremiumFeatureClick = (featureName: string) => {
+    if (userPlan === "free") {
+      setUpgradeFeatureName(featureName);
+      setIsUpgradeModalOpen(true);
+      return true; // indicates it was blocked
+    }
+    return false; // allowed
   };
 
   const downloadQR = () => {
@@ -325,16 +341,24 @@ export default function ProfileClient({ user }: { user: any }) {
               </div>
 
               {/* SEO Controls */}
-              <div className="pt-4 border-t border-[#eeeeee] dark:border-[#222]">
-                <h3 className="text-sm font-bold mb-4">SEO & Metadatos</h3>
+              <div className="pt-4 border-t border-[#eeeeee] dark:border-[#222] relative">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-bold">SEO & Metadatos</h3>
+                  {userPlan === "free" && <span className="text-[10px] font-bold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">PRO</span>}
+                </div>
                 <div className="space-y-4">
                   <div>
                     <label className="block text-xs font-bold uppercase tracking-widest text-[#999999] mb-2">Título de la página (SEO)</label>
                     <input
                       type="text"
                       value={seoTitle}
-                      onChange={(e) => setSeoTitle(e.target.value)}
-                      className="w-full bg-[#f9fafb] dark:bg-[#111] border border-[#eeeeee] dark:border-[#222] rounded-xl py-3 px-4 focus:outline-none focus:border-[#111111] dark:focus:border-white transition-all text-sm"
+                      onChange={(e) => {
+                        if (handlePremiumFeatureClick("Controles SEO")) return;
+                        setSeoTitle(e.target.value);
+                      }}
+                      onClick={() => handlePremiumFeatureClick("Controles SEO")}
+                      readOnly={userPlan === "free"}
+                      className={`w-full bg-[#f9fafb] dark:bg-[#111] border border-[#eeeeee] dark:border-[#222] rounded-xl py-3 px-4 focus:outline-none focus:border-[#111111] dark:focus:border-white transition-all text-sm ${userPlan === "free" ? "opacity-50 cursor-not-allowed" : ""}`}
                       placeholder={`${displayName || username} | Bioly`}
                     />
                   </div>
@@ -343,8 +367,13 @@ export default function ProfileClient({ user }: { user: any }) {
                     <textarea
                       rows={2}
                       value={seoDescription}
-                      onChange={(e) => setSeoDescription(e.target.value)}
-                      className="w-full bg-[#f9fafb] dark:bg-[#111] border border-[#eeeeee] dark:border-[#222] rounded-xl py-3 px-4 focus:outline-none focus:border-[#111111] dark:focus:border-white transition-all text-sm resize-none"
+                      onChange={(e) => {
+                        if (handlePremiumFeatureClick("Controles SEO")) return;
+                        setSeoDescription(e.target.value);
+                      }}
+                      onClick={() => handlePremiumFeatureClick("Controles SEO")}
+                      readOnly={userPlan === "free"}
+                      className={`w-full bg-[#f9fafb] dark:bg-[#111] border border-[#eeeeee] dark:border-[#222] rounded-xl py-3 px-4 focus:outline-none focus:border-[#111111] dark:focus:border-white transition-all text-sm resize-none ${userPlan === "free" ? "opacity-50 cursor-not-allowed" : ""}`}
                       placeholder="Breve descripción que aparecerá en Google y al compartir el link."
                     />
                   </div>
@@ -563,6 +592,12 @@ export default function ProfileClient({ user }: { user: any }) {
           </div>
         </main>
       </div>
+
+      <UpgradeModal 
+        isOpen={isUpgradeModalOpen} 
+        onClose={() => setIsUpgradeModalOpen(false)} 
+        featureName={upgradeFeatureName} 
+      />
     </div>
   );
 }

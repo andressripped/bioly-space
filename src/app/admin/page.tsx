@@ -17,10 +17,16 @@ export default async function AdminPage() {
   // La mejor forma es que guardemos el email en profiles al momento de crear la cuenta.
   
   // Vamos a traer los perfiles
-  const { data: profiles } = await supabase
+  const { data: profiles, error: profilesError } = await supabase
     .from("profiles")
     .select("*")
-    .order("created_at", { ascending: false });
+    .order("updated_at", { ascending: false });
+
+  if (profilesError) {
+    console.error("Error al obtener perfiles en Admin:", profilesError);
+  } else {
+    console.log(`[Admin] Se encontraron ${profiles?.length || 0} perfiles.`);
+  }
 
   return (
     <div className="min-h-screen bg-[#fcfcfc] dark:bg-[#050505] text-[#111111] dark:text-white p-6 md:p-12">

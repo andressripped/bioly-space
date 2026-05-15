@@ -3,17 +3,21 @@
 import { useState } from "react";
 import { Search, Crown, Check, Loader2, Calendar } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
+import { useRouter } from "next/navigation";
 
 export default function AdminClient({ profiles }: { profiles: any[] }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const supabase = createClient();
+  const router = useRouter();
 
-  const filteredProfiles = profiles.filter((p) => 
-    (p.username && p.username.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (p.email && p.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (p.display_name && p.display_name.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const filteredProfiles = profiles.filter((p) => {
+    const s = searchTerm.toLowerCase();
+    const uname = p.username?.toLowerCase() || "";
+    const email = p.email?.toLowerCase() || "";
+    const dname = p.display_name?.toLowerCase() || "";
+    return uname.includes(s) || email.includes(s) || dname.includes(s);
+  });
 
   const handleGrantPlan = async (profileId: string, plan: "pro" | "business", days: number) => {
     if (!confirm(`¿Activar plan ${plan.toUpperCase()} por ${days} días?`)) return;
@@ -36,7 +40,7 @@ export default function AdminClient({ profiles }: { profiles: any[] }) {
       alert("Error al actualizar: " + error.message);
     } else {
       alert("¡Plan activado con éxito!");
-      window.location.reload();
+      router.refresh();
     }
     setLoadingId(null);
   };
@@ -49,7 +53,11 @@ export default function AdminClient({ profiles }: { profiles: any[] }) {
       .update({ plan: "free", subscription_expires_at: null })
       .eq("id", profileId);
     
-    if (!error) window.location.reload();
+    if (error) {
+      alert("Error al revocar: " + error.message);
+    } else {
+      router.refresh();
+    }
     setLoadingId(null);
   };
 
@@ -100,7 +108,7 @@ export default function AdminClient({ profiles }: { profiles: any[] }) {
                     {isExpired && isPremium && <span className="ml-2 text-xs text-red-500 font-bold">(Expirado)</span>}
                   </td>
                   <td className="px-4 py-4 text-[#777]">
-                    {p.subscription_expires_at ? new Date(p.subscription_expires_at).toLocaleDateString() : "---"}
+                    {p.subscription_expires_at ? p.subscription_expires_at.substring(0, 10) : "---"}
                   </td>
                   <td className="px-4 py-4 text-right space-x-2">
                     {loadingId === p.id ? (

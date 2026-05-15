@@ -6,6 +6,8 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { InstagramIcon, TiktokIcon, YoutubeIcon } from "@/components/icons";
 import { useTheme } from "next-themes";
+import { Navbar } from "@/components/Navbar";
+import { Footer } from "@/components/Footer";
 
 const translations = {
   EN: {
@@ -87,38 +89,7 @@ export default function Home() {
     <div className="min-h-screen bg-white dark:bg-[#050505] text-[#111111] dark:text-[#f4f4f5] selection:bg-[#111111] selection:text-white dark:selection:bg-white dark:selection:text-black font-sans overflow-x-hidden transition-colors duration-300">
       
       {/* HEADER */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-[#050505]/80 backdrop-blur-md border-b border-[#eeeeee] dark:border-[#222222] transition-colors duration-300">
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <div className="text-2xl font-extrabold tracking-tighter">bioly.</div>
-          
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2 text-sm font-medium text-[#555555] dark:text-[#a1a1aa]">
-              <Globe className="w-4 h-4" />
-              <select 
-                value={lang} 
-                onChange={(e) => setLang(e.target.value as Locale)}
-                className="bg-transparent border-none focus:outline-none cursor-pointer uppercase tracking-wider"
-              >
-                <option value="EN">EN</option>
-                <option value="ES">ES</option>
-                <option value="PT">PT</option>
-              </select>
-            </div>
-            
-            <button 
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-[#111] transition-colors"
-              aria-label="Toggle Dark Mode"
-            >
-              {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            </button>
-
-            <Link href="/login" className="text-sm font-semibold bg-[#111111] dark:bg-white text-white dark:text-black px-6 py-3 rounded-xl hover:bg-black dark:hover:bg-gray-200 transition-all shadow-sm active:scale-[0.98]">
-              {t.nav_login}
-            </Link>
-          </div>
-        </div>
-      </header>
+      <Navbar lang={lang} setLang={setLang} t={t} />
 
       {/* HERO SECTION */}
       <section className="pt-40 pb-20 px-6">
@@ -276,6 +247,7 @@ export default function Home() {
         </div>
       </section>
 
+      <Footer />
     </div>
   );
 }
