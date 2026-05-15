@@ -10,6 +10,8 @@ import { createClient } from "@/utils/supabase/client";
 import { PlatformIcon } from "@/components/PlatformIcon";
 import { QRCodeCanvas } from "qrcode.react";
 import UpgradeModal from "@/components/UpgradeModal";
+import { BIOLY_TEMPLATES, TemplateConfig } from "@/lib/templates";
+import { FONT_OPTIONS, FONT_CLASSES } from "@/lib/fonts";
 
 type Device = "desktop" | "tablet" | "mobile";
 
@@ -19,12 +21,6 @@ export const BUTTON_STYLE_MAP: Record<string, string> = {
   pill:    "rounded-full",
   square:  "rounded-md",
   outline: "rounded-2xl",
-};
-
-export const FONT_MAP: Record<string, string> = {
-  inter: "font-sans",
-  serif: "font-serif",
-  mono:  "font-mono",
 };
 
 const THEME_COLORS = [
@@ -37,12 +33,6 @@ const BUTTON_STYLES = [
   { id: "pill",    label: "Píldora"    },
   { id: "square",  label: "Cuadrado"  },
   { id: "outline", label: "Outline"   },
-];
-
-const FONTS = [
-  { id: "inter", label: "Inter", style: "font-sans" },
-  { id: "serif", label: "Serif", style: "font-serif" },
-  { id: "mono",  label: "Mono",  style: "font-mono"  },
 ];
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -70,6 +60,11 @@ export default function ProfileClient({ user }: { user: any }) {
   const [upgradeFeatureName, setUpgradeFeatureName] = useState("");
 
   // Appearance
+  const [templateId, setTemplateId]             = useState("default");
+  const [backgroundType, setBackgroundType]     = useState<"solid" | "gradient" | "image" | "animated">("solid");
+  const [backgroundValue, setBackgroundValue]   = useState("#fcfcfc");
+  const [backgroundBlur, setBackgroundBlur]     = useState(0);
+
   const [themeColor, setThemeColor]     = useState("#111111");
   const [buttonStyle, setButtonStyle]   = useState("rounded");
   const [fontFamily, setFontFamily]     = useState("inter");
@@ -96,6 +91,10 @@ export default function ProfileClient({ user }: { user: any }) {
           setThemeColor(profile.theme_color || "#111111");
           setButtonStyle(profile.button_style || "rounded");
           setFontFamily(profile.font_family || "inter");
+          setTemplateId(profile.template_id || "default");
+          setBackgroundType(profile.background_type || "solid");
+          setBackgroundValue(profile.background_value || "#fcfcfc");
+          setBackgroundBlur(profile.background_blur || 0);
           setSeoTitle(profile.seo_title || "");
           setSeoDescription(profile.seo_description || "");
           setUserPlan(profile.plan || "free");
@@ -152,6 +151,10 @@ export default function ProfileClient({ user }: { user: any }) {
         theme_color:  themeColor,
         button_style: buttonStyle,
         font_family:  fontFamily,
+        template_id:  templateId,
+        background_type: backgroundType,
+        background_value: backgroundValue,
+        background_blur: backgroundBlur,
         seo_title:    seoTitle,
         seo_description: seoDescription,
         updated_at:   new Date().toISOString(),
@@ -181,6 +184,24 @@ export default function ProfileClient({ user }: { user: any }) {
     return false; // allowed
   };
 
+  const handleSelectTemplate = (template: TemplateConfig) => {
+    if (template.tier === "pro" && userPlan === "free") {
+      handlePremiumFeatureClick(`Plantilla ${template.name}`);
+      return;
+    }
+    if (template.tier === "business" && userPlan !== "business") {
+      handlePremiumFeatureClick(`Plantilla ${template.name}`);
+      return;
+    }
+    setTemplateId(template.id);
+    setThemeColor(template.theme_color);
+    setButtonStyle(template.button_style);
+    setFontFamily(template.font_family);
+    setBackgroundType(template.background_type);
+    setBackgroundValue(template.background_value);
+    setBackgroundBlur(template.background_blur);
+  };
+
   const downloadQR = () => {
     const canvas = document.getElementById("qr-code") as HTMLCanvasElement;
     if (canvas) {
@@ -197,7 +218,7 @@ export default function ProfileClient({ user }: { user: any }) {
   // Derived style classes used in BOTH preview and public page
   const btnClass = BUTTON_STYLE_MAP[buttonStyle] ?? "rounded-2xl";
   const isOutline = buttonStyle === "outline";
-  const fontClass = FONT_MAP[fontFamily] ?? "font-sans";
+  const fontClass = FONT_CLASSES[fontFamily] || FONT_CLASSES["inter"];
 
   if (loading) {
     return (
@@ -413,14 +434,83 @@ export default function ProfileClient({ user }: { user: any }) {
           {/* ── Section: APPEARANCE ── */}
           {activeSection === "appearance" && (
             <div className="flex-1 px-8 py-6 space-y-8">
+              {/* Templates */}
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-widest text-[#999999] mb-3">Plantillas (Templates)</label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {BIOLY_TEMPLATES.map((tpl) => (
+                    <button
+                      key={tpl.id}
+                      onClick={() => handleSelectTemplate(tpl)}
+                      className={`relative p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-center gap-2 ${
+                        templateId === tpl.id ? "border-[#111111] dark:border-white bg-gray-50 dark:bg-[#111]" : "border-[#eeeeee] dark:border-[#222] hover:border-[#ccc] dark:hover:border-[#555]"
+                      }`}
+                    >
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center shadow-inner" style={{ background: tpl.background_type === "gradient" ? tpl.background_value : tpl.background_type === "solid" ? tpl.background_value : "#fff" }}>
+                        <div className="w-4 h-4 rounded-full border border-black/10" style={{ backgroundColor: tpl.theme_color }} />
+                      </div>
+                      <span className="text-[10px] font-bold truncate w-full text-center text-[#555] dark:text-[#ccc]">{tpl.name}</span>
+                      {tpl.tier !== "free" && (
+                        <span className="absolute top-1 right-1 text-[8px] font-bold bg-gray-200 dark:bg-gray-800 text-[#555] dark:text-[#a1a1aa] px-1.5 py-0.5 rounded-sm uppercase tracking-widest">{tpl.tier}</span>
+                      )}
+                      {templateId === tpl.id && (
+                        <div className="absolute top-1 left-1 w-3.5 h-3.5 bg-[#111111] dark:bg-white rounded-full flex items-center justify-center">
+                          <Check className="w-2 h-2 text-white dark:text-black" />
+                        </div>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Fondo (Background) */}
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-widest text-[#999999] mb-3">Fondo</label>
+                <div className="flex gap-2 mb-3">
+                  {(["solid", "gradient"] as const).map(type => (
+                    <button
+                      key={type}
+                      onClick={() => {
+                        setBackgroundType(type);
+                        setTemplateId("custom");
+                      }}
+                      className={`px-4 py-2 rounded-xl text-xs font-bold border-2 transition-all ${backgroundType === type ? "border-[#111111] dark:border-white text-[#111111] dark:text-white" : "border-[#eeeeee] dark:border-[#222] text-[#999999] hover:border-[#ccc]"}`}
+                    >
+                      {type === "solid" ? "Color Sólido" : "Gradiente"}
+                    </button>
+                  ))}
+                </div>
+                {backgroundType === "solid" && (
+                  <div className="flex items-center gap-3">
+                    <label className="relative w-12 h-12 rounded-xl overflow-hidden cursor-pointer border-2 border-[#eeeeee] dark:border-[#333]">
+                      <div className="w-full h-full" style={{ backgroundColor: backgroundValue.startsWith("#") ? backgroundValue : "#ffffff" }} />
+                      <input type="color" value={backgroundValue.startsWith("#") ? backgroundValue : "#ffffff"} onChange={(e) => { setBackgroundValue(e.target.value); setTemplateId("custom"); }} className="absolute inset-0 opacity-0 w-full h-full cursor-pointer" />
+                    </label>
+                    <span className="text-xs text-[#999999] font-mono">{backgroundValue}</span>
+                  </div>
+                )}
+                {backgroundType === "gradient" && (
+                  <div className="flex flex-col gap-3">
+                    <input
+                      type="text"
+                      value={backgroundValue}
+                      onChange={(e) => { setBackgroundValue(e.target.value); setTemplateId("custom"); }}
+                      placeholder="e.g. linear-gradient(to right, #ff7e5f, #feb47b)"
+                      className="w-full text-xs font-mono bg-[#f9fafb] dark:bg-[#111] border border-[#eeeeee] dark:border-[#222] rounded-xl py-3 px-4 focus:outline-none focus:border-[#111111] dark:focus:border-white"
+                    />
+                    <div className="w-full h-12 rounded-xl border-2 border-[#eeeeee] dark:border-[#222]" style={{ background: backgroundValue }} />
+                  </div>
+                )}
+              </div>
+
               {/* Theme Color */}
               <div>
-                <label className="block text-xs font-bold uppercase tracking-widest text-[#999999] mb-3">Color del banner</label>
+                <label className="block text-xs font-bold uppercase tracking-widest text-[#999999] mb-3">Color de Acento (Botones / Letras)</label>
                 <div className="flex items-center gap-2 flex-wrap">
                   {THEME_COLORS.map((c) => (
                     <button
                       key={c}
-                      onClick={() => setThemeColor(c)}
+                      onClick={() => { setThemeColor(c); setTemplateId("custom"); }}
                       className={`w-9 h-9 rounded-full transition-all border-2 ${
                         themeColor === c ? "ring-2 ring-offset-2 ring-[#111] dark:ring-white scale-110 border-white" : "border-transparent opacity-80 hover:opacity-100 hover:scale-105"
                       }`}
@@ -429,10 +519,9 @@ export default function ProfileClient({ user }: { user: any }) {
                   ))}
                   <label className="relative w-9 h-9 rounded-full overflow-hidden cursor-pointer border-2 border-[#eeeeee] dark:border-[#333] hover:scale-105 transition-all" title="Color personalizado">
                     <div className="w-full h-full rounded-full" style={{ backgroundColor: themeColor }} />
-                    <input type="color" value={themeColor} onChange={(e) => setThemeColor(e.target.value)} className="absolute inset-0 opacity-0 w-full h-full cursor-pointer" />
+                    <input type="color" value={themeColor} onChange={(e) => { setThemeColor(e.target.value); setTemplateId("custom"); }} className="absolute inset-0 opacity-0 w-full h-full cursor-pointer" />
                   </label>
                 </div>
-                <p className="text-xs text-[#999999] mt-2 font-mono">{themeColor.toUpperCase()}</p>
               </div>
 
               {/* Button Style */}
@@ -446,7 +535,7 @@ export default function ProfileClient({ user }: { user: any }) {
                     return (
                       <button
                         key={style.id}
-                        onClick={() => setButtonStyle(style.id)}
+                        onClick={() => { setButtonStyle(style.id); setTemplateId("custom"); }}
                         className={`relative p-3 border-2 transition-all ${cls} ${
                           isSelected ? "border-[#111111] dark:border-white" : "border-[#eeeeee] dark:border-[#222] hover:border-[#ccc] dark:hover:border-[#555]"
                         }`}
@@ -466,20 +555,37 @@ export default function ProfileClient({ user }: { user: any }) {
 
               {/* Font */}
               <div>
-                <label className="block text-xs font-bold uppercase tracking-widest text-[#999999] mb-3">Tipografía</label>
-                <div className="grid grid-cols-3 gap-2">
-                  {FONTS.map((font) => (
+                <div className="flex items-center justify-between mb-3">
+                  <label className="block text-xs font-bold uppercase tracking-widest text-[#999999]">Tipografía</label>
+                  {userPlan === "free" && <span className="text-[10px] font-bold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">PRO</span>}
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+                  {FONT_OPTIONS.map((font) => (
                     <button
                       key={font.id}
-                      onClick={() => setFontFamily(font.id)}
-                      className={`relative p-3 rounded-2xl border-2 transition-all ${
-                        fontFamily === font.id ? "border-[#111111] dark:border-white" : "border-[#eeeeee] dark:border-[#222] hover:border-[#ccc] dark:hover:border-[#555]"
+                      onClick={() => {
+                        if (font.tier !== "free" && userPlan === "free") {
+                          handlePremiumFeatureClick(`Fuente ${font.label}`);
+                          return;
+                        }
+                        if (font.tier === "business" && userPlan !== "business") {
+                          handlePremiumFeatureClick(`Fuente ${font.label}`);
+                          return;
+                        }
+                        setFontFamily(font.id);
+                        setTemplateId("custom");
+                      }}
+                      className={`relative p-3 rounded-2xl border-2 transition-all overflow-hidden ${
+                        fontFamily === font.id ? "border-[#111111] dark:border-white bg-gray-50 dark:bg-[#111]" : "border-[#eeeeee] dark:border-[#222] hover:border-[#ccc] dark:hover:border-[#555]"
                       }`}
                     >
-                      <p className={`text-2xl font-bold ${font.style}`}>Aa</p>
-                      <p className="text-[10px] text-[#999999] mt-1 uppercase tracking-wide">{font.label}</p>
+                      <p className={`text-2xl font-bold ${FONT_CLASSES[font.id] || ""}`}>Aa</p>
+                      <p className="text-[10px] text-[#999999] mt-1 uppercase tracking-wide truncate">{font.label}</p>
+                      {font.tier !== "free" && (
+                        <span className="absolute top-1 right-1 text-[8px] font-bold bg-gray-200 dark:bg-gray-800 text-[#555] dark:text-[#a1a1aa] px-1.5 py-0.5 rounded-sm uppercase tracking-widest">{font.tier}</span>
+                      )}
                       {fontFamily === font.id && (
-                        <div className="absolute top-1.5 right-1.5 w-4 h-4 bg-[#111111] dark:bg-white rounded-full flex items-center justify-center">
+                        <div className="absolute top-1.5 left-1.5 w-3.5 h-3.5 bg-[#111111] dark:bg-white rounded-full flex items-center justify-center">
                           <Check className="w-2.5 h-2.5 text-white dark:text-black" />
                         </div>
                       )}
@@ -526,18 +632,26 @@ export default function ProfileClient({ user }: { user: any }) {
           {/* Preview frame */}
           <div className="flex-1 flex items-center justify-center w-full pt-20 pb-10 px-4">
             <div
-              className={`transition-all duration-500 ease-in-out bg-white dark:bg-[#0a0a0a] shadow-2xl overflow-hidden border border-black/5 flex flex-col
+              className={`transition-all duration-500 ease-in-out shadow-2xl overflow-hidden border border-black/5 flex flex-col relative
                 ${activeDevice === "desktop" ? "w-full max-w-2xl h-[600px] rounded-xl"              : ""}
                 ${activeDevice === "tablet"  ? "w-[500px] h-[700px] rounded-[3rem] border-[10px] border-[#111]" : ""}
                 ${activeDevice === "mobile"  ? "w-[320px] h-[640px] rounded-[3rem] border-[10px] border-[#111]" : ""}
               `}
+              style={{
+                background: backgroundType === "gradient" ? backgroundValue : backgroundType === "solid" ? backgroundValue : "#ffffff",
+              }}
             >
-              <div className={`flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden ${fontClass}`}>
+              <div className={`flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden relative z-10 ${fontClass}`}>
                 {/* Banner */}
-                <div className="w-full h-28 transition-colors duration-300" style={{ backgroundColor: themeColor }} />
+                {backgroundType === "solid" && (
+                  <div className="w-full h-28 transition-colors duration-300" style={{ backgroundColor: themeColor }} />
+                )}
+                {backgroundType === "gradient" && (
+                  <div className="w-full h-12" /> // spacer instead of solid banner for gradients
+                )}
 
                 {/* Content */}
-                <div className="px-5 -mt-10 text-center pb-16">
+                <div className={`px-5 text-center pb-16 ${backgroundType === "solid" ? "-mt-10" : "mt-4"}`}>
                   {/* Avatar */}
                   <div className="w-20 h-20 mx-auto rounded-full bg-white dark:bg-[#0a0a0a] p-1 shadow-lg mb-3 border border-black/5">
                     <div className="w-full h-full rounded-full bg-gray-200 dark:bg-gray-800 overflow-hidden">

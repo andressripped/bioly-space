@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { PlatformIcon } from "@/components/PlatformIcon";
 import { Share2, Mail, Check, Loader2 } from "lucide-react";
+import { FONT_CLASSES } from "@/lib/fonts";
 
 // Same mapping as ProfileClient — single source of truth
 const BUTTON_STYLE_MAP: Record<string, string> = {
@@ -10,12 +11,6 @@ const BUTTON_STYLE_MAP: Record<string, string> = {
   pill:    "rounded-full",
   square:  "rounded-md",
   outline: "rounded-2xl",
-};
-
-const FONT_MAP: Record<string, string> = {
-  inter: "font-sans",
-  serif: "font-serif",
-  mono:  "font-mono",
 };
 
 interface ProfileViewProps {
@@ -32,8 +27,10 @@ export default function ProfileView({ profile, links }: ProfileViewProps) {
   // Resolve style classes from profile data
   const btnClass  = BUTTON_STYLE_MAP[profile.button_style ?? "rounded"] ?? "rounded-2xl";
   const isOutline = (profile.button_style ?? "rounded") === "outline";
-  const fontClass = FONT_MAP[profile.font_family ?? "inter"] ?? "font-sans";
+  const fontClass = FONT_CLASSES[profile.font_family ?? "inter"] || FONT_CLASSES["inter"];
   const themeColor = profile.theme_color || "#111111";
+  const bgType = profile.background_type || "solid";
+  const bgValue = profile.background_value || "#fcfcfc";
 
   // Track page view (once)
   useEffect(() => {
@@ -99,19 +96,28 @@ export default function ProfileView({ profile, links }: ProfileViewProps) {
   };
 
   return (
-    <div className={`min-h-screen flex flex-col items-center bg-[#fcfcfc] dark:bg-[#050505] text-[#111111] dark:text-[#f4f4f5] selection:bg-black selection:text-white ${fontClass}`}>
-
+    <div 
+      className={`min-h-screen flex flex-col items-center text-[#111111] dark:text-[#f4f4f5] selection:bg-black selection:text-white relative ${fontClass}`}
+      style={{
+        background: bgType === "gradient" ? bgValue : bgType === "solid" ? bgValue : "#fcfcfc",
+      }}
+    >
       {/* BANNER */}
-      <div
-        className="w-full h-40 sm:h-52 transition-colors duration-1000"
-        style={{ backgroundColor: themeColor }}
-      />
+      {bgType === "solid" && (
+        <div
+          className="w-full h-40 sm:h-52 transition-colors duration-1000 relative z-10"
+          style={{ backgroundColor: themeColor }}
+        />
+      )}
+      {bgType === "gradient" && (
+        <div className="w-full h-16 relative z-10" />
+      )}
 
       {/* MAIN CONTENT */}
-      <main className="w-full max-w-xl px-6 -mt-16 sm:-mt-20 pb-20 flex flex-col items-center">
+      <main className={`w-full max-w-xl px-6 ${bgType === "solid" ? "-mt-16 sm:-mt-20" : "mt-8"} pb-20 flex flex-col items-center relative z-10`}>
 
         {/* Avatar */}
-        <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-full p-1.5 bg-[#fcfcfc] dark:bg-[#050505] shadow-2xl mb-6 relative">
+        <div className={`w-32 h-32 sm:w-40 sm:h-40 rounded-full p-1.5 shadow-2xl mb-6 relative ${bgType === "solid" ? "bg-white dark:bg-[#050505]" : "bg-white/20 backdrop-blur-md"}`}>
           <div className="w-full h-full rounded-full overflow-hidden bg-gray-100 dark:bg-[#111] border border-black/5 dark:border-white/5">
             {profile.avatar_url ? (
               <img src={profile.avatar_url} alt={profile.display_name} className="w-full h-full object-cover" />
