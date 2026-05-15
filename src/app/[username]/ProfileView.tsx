@@ -35,6 +35,9 @@ export default function ProfileView({ profile, links }: ProfileViewProps) {
   const bgValue = profile.background_value || "#fcfcfc";
   const layoutMode = profile.layout_mode || "classic";
 
+  const socialLinks = links.filter(l => l.is_social);
+  const mainLinks = links.filter(l => !l.is_social);
+
   // Track page view (once)
   useEffect(() => {
     if (tracked.current) return;
@@ -155,10 +158,39 @@ export default function ProfileView({ profile, links }: ProfileViewProps) {
           </p>
         </div>
 
-        {/* LINKS — styled from profile.button_style */}
-        {/* LINKS */}
-        <div className={`w-full ${isCard ? "grid grid-cols-2 gap-4" : "space-y-3"}`}>
-          {links.map((link) => (
+        {/* SOCIAL BUBBLES */}
+        {socialLinks.length > 0 && (
+          <div className="flex flex-wrap items-center justify-center gap-3 mb-10">
+            {socialLinks.map((link) => (
+              <a
+                key={link.id}
+                href={link.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => handleLinkClick(link)}
+                className="w-12 h-12 rounded-full flex items-center justify-center transition-transform hover:scale-110 shadow-lg border border-black/5 dark:border-white/10"
+                style={{
+                  background: link.icon === 'instagram' ? 'radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%)'
+                    : link.icon === 'tiktok' ? '#000000'
+                    : link.icon === 'snapchat' ? '#FFFC00'
+                    : link.icon === 'youtube' ? '#FF0000'
+                    : link.icon === 'whatsapp' ? '#25D366'
+                    : link.icon === 'spotify' ? '#1DB954'
+                    : link.icon === 'facebook' ? '#1877F2'
+                    : link.icon === 'twitter' ? '#000000'
+                    : themeColor,
+                  color: link.icon === 'snapchat' ? '#000' : '#fff'
+                }}
+              >
+                <PlatformIcon id={link.icon} className="w-6 h-6" />
+              </a>
+            ))}
+          </div>
+        )}
+
+        {/* MAIN LINKS */}
+        <div className={`w-full ${isCard ? "grid grid-cols-2 sm:grid-cols-2 gap-4" : "space-y-3"}`}>
+          {mainLinks.map((link) => (
             <a
               key={link.id}
               href={link.url}
@@ -215,7 +247,7 @@ export default function ProfileView({ profile, links }: ProfileViewProps) {
             </a>
           ))}
 
-          {links.length === 0 && (
+          {mainLinks.length === 0 && (
             <div className="text-center py-10 opacity-40">
               <p className="text-sm italic">Este usuario aún no ha añadido enlaces.</p>
             </div>

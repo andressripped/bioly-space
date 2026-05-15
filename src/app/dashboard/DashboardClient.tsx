@@ -75,7 +75,15 @@ function SortableLinkItem({
 
       {/* Info */}
       <div className="flex-1 min-w-0">
-        <h3 className="font-semibold text-[#111111] dark:text-white truncate text-sm">{link.title}</h3>
+        <div className="flex items-center gap-2">
+          <h3 className="font-semibold text-[#111111] dark:text-white truncate text-sm">{link.title}</h3>
+          {link.is_social && (
+            <span className="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded-full dark:bg-blue-900/30 dark:text-blue-400">Social</span>
+          )}
+          {link.thumbnail_url && !link.is_social && (
+            <span className="bg-purple-100 text-purple-800 text-[10px] font-bold px-2 py-0.5 rounded-full dark:bg-purple-900/30 dark:text-purple-400">Con Imagen</span>
+          )}
+        </div>
         <p className="text-xs text-[#999999] truncate">{link.url}</p>
       </div>
 

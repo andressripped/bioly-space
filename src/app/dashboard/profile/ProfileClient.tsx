@@ -227,6 +227,9 @@ export default function ProfileClient({ user }: { user: any }) {
   const isCard = buttonStyle === "card";
   const fontClass = FONT_CLASSES[fontFamily] || FONT_CLASSES["inter"];
 
+  const socialLinks = links.filter(l => l.is_social);
+  const mainLinks = links.filter(l => !l.is_social);
+
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center bg-white dark:bg-[#050505]">
@@ -678,9 +681,35 @@ export default function ProfileClient({ user }: { user: any }) {
                   <h2 className="text-lg font-bold dark:text-white mb-1">{displayName || "Tu Nombre"}</h2>
                   <p className="text-xs text-[#555555] dark:text-[#a1a1aa] mb-6 leading-relaxed">{bio || "Tu biografía..."}</p>
 
+                  {/* SOCIAL BUBBLES */}
+                  {socialLinks.length > 0 && (
+                    <div className="flex flex-wrap items-center justify-center gap-2 mb-6 max-w-[260px] mx-auto">
+                      {socialLinks.map((link) => (
+                        <div
+                          key={link.id}
+                          className="w-10 h-10 rounded-full flex items-center justify-center transition-transform hover:scale-110 shadow-lg border border-black/5 dark:border-white/10"
+                          style={{
+                            background: link.icon === 'instagram' ? 'radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%)'
+                              : link.icon === 'tiktok' ? '#000000'
+                              : link.icon === 'snapchat' ? '#FFFC00'
+                              : link.icon === 'youtube' ? '#FF0000'
+                              : link.icon === 'whatsapp' ? '#25D366'
+                              : link.icon === 'spotify' ? '#1DB954'
+                              : link.icon === 'facebook' ? '#1877F2'
+                              : link.icon === 'twitter' ? '#000000'
+                              : themeColor,
+                            color: link.icon === 'snapchat' ? '#000' : '#fff'
+                          }}
+                        >
+                          <PlatformIcon id={link.icon} className="w-5 h-5" />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
                   {/* Links — EXACTLY matching ProfileView rendering */}
                   <div className={`w-full max-w-[260px] mx-auto ${isCard ? "grid grid-cols-2 gap-3" : "space-y-2.5"}`}>
-                    {links.length > 0 ? links.map((link) => (
+                    {mainLinks.length > 0 ? mainLinks.map((link) => (
                       <div
                         key={link.id}
                         className={

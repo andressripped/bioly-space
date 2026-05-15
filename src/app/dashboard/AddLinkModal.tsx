@@ -52,6 +52,8 @@ export function AddLinkModal({ isOpen, onClose, onSuccess }: AddLinkModalProps) 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isSocial, setIsSocial] = useState(false);
+  const [thumbnailUrl, setThumbnailUrl] = useState("");
   
   const supabase = createClient();
 
@@ -101,6 +103,8 @@ export function AddLinkModal({ isOpen, onClose, onSuccess }: AddLinkModalProps) 
             icon: selectedPlatform.id,
             is_active: true,
             position: nextPosition,
+            is_social: isSocial,
+            thumbnail_url: thumbnailUrl || null,
           }
         ]);
 
@@ -214,6 +218,35 @@ export function AddLinkModal({ isOpen, onClose, onSuccess }: AddLinkModalProps) 
               </div>
             </div>
 
+            <div className="pt-2 space-y-4">
+              <label className="flex items-center gap-3 p-4 border border-[#eeeeee] dark:border-[#222] rounded-2xl cursor-pointer hover:bg-gray-50 dark:hover:bg-[#111] transition-colors">
+                <input
+                  type="checkbox"
+                  checked={isSocial}
+                  onChange={(e) => setIsSocial(e.target.checked)}
+                  className="w-5 h-5 rounded border-gray-300 text-[#111111] focus:ring-[#111111]"
+                />
+                <div>
+                  <span className="block text-sm font-bold text-[#111111] dark:text-white">Mostrar como "Bolita" social</span>
+                  <span className="block text-xs text-[#999999]">Aparecerá en la fila superior (Ej: como el logo de IG o TikTok)</span>
+                </div>
+              </label>
+
+              {!isSocial && (
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-widest text-[#999999] mb-2 ml-1">
+                    URL de la Imagen (Para Tarjetas)
+                  </label>
+                  <input
+                    type="url"
+                    value={thumbnailUrl}
+                    onChange={(e) => setThumbnailUrl(e.target.value)}
+                    className="w-full bg-[#f9fafb] dark:bg-[#111] border border-[#eeeeee] dark:border-[#222] rounded-2xl py-4 px-4 text-[#111111] dark:text-white focus:outline-none focus:border-[#111111] dark:focus:border-white transition-all text-sm font-medium"
+                    placeholder="https://ejemplo.com/imagen.jpg (Opcional)"
+                  />
+                </div>
+              )}
+            </div>
             <div className="pt-4">
               <button
                 type="submit"
