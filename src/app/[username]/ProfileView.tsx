@@ -11,6 +11,7 @@ const BUTTON_STYLE_MAP: Record<string, string> = {
   pill:    "rounded-full",
   square:  "rounded-md",
   outline: "rounded-2xl",
+  card:    "rounded-3xl",
 };
 
 interface ProfileViewProps {
@@ -27,10 +28,12 @@ export default function ProfileView({ profile, links }: ProfileViewProps) {
   // Resolve style classes from profile data
   const btnClass  = BUTTON_STYLE_MAP[profile.button_style ?? "rounded"] ?? "rounded-2xl";
   const isOutline = (profile.button_style ?? "rounded") === "outline";
+  const isCard    = profile.button_style === "card";
   const fontClass = FONT_CLASSES[profile.font_family ?? "inter"] || FONT_CLASSES["inter"];
   const themeColor = profile.theme_color || "#111111";
   const bgType = profile.background_type || "solid";
   const bgValue = profile.background_value || "#fcfcfc";
+  const layoutMode = profile.layout_mode || "classic";
 
   // Track page view (once)
   useEffect(() => {
@@ -99,10 +102,10 @@ export default function ProfileView({ profile, links }: ProfileViewProps) {
     <div 
       className={`min-h-screen flex flex-col items-center text-[#111111] dark:text-[#f4f4f5] selection:bg-black selection:text-white relative ${fontClass}`}
       style={{
-        background: bgType === "gradient" ? bgValue : bgType === "solid" ? bgValue : "#fcfcfc",
+        background: bgType === "gradient" ? bgValue : bgType === "solid" ? bgValue : "#000000",
       }}
     >
-      {/* BANNER */}
+      {/* BANNER / BACKGROUND */}
       {bgType === "solid" && (
         <div
           className="w-full h-40 sm:h-52 transition-colors duration-1000 relative z-10"
@@ -112,12 +115,18 @@ export default function ProfileView({ profile, links }: ProfileViewProps) {
       {bgType === "gradient" && (
         <div className="w-full h-16 relative z-10" />
       )}
+      {bgType === "image_fade" && (
+        <div className="fixed top-0 left-0 w-full h-[60vh] z-0">
+          <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${bgValue})` }} />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/40 to-black" />
+        </div>
+      )}
 
       {/* MAIN CONTENT */}
-      <main className={`w-full max-w-xl px-6 ${bgType === "solid" ? "-mt-16 sm:-mt-20" : "mt-8"} pb-20 flex flex-col items-center relative z-10`}>
+      <main className={`w-full max-w-xl px-6 ${bgType === "solid" ? "-mt-16 sm:-mt-20" : bgType === "image_fade" ? "pt-24 sm:pt-32" : "mt-8"} pb-20 flex flex-col items-center relative z-10`}>
 
         {/* Avatar */}
-        <div className={`w-32 h-32 sm:w-40 sm:h-40 rounded-full p-1.5 shadow-2xl mb-6 relative ${bgType === "solid" ? "bg-white dark:bg-[#050505]" : "bg-white/20 backdrop-blur-md"}`}>
+        <div className={`w-32 h-32 sm:w-40 sm:h-40 rounded-full p-1.5 shadow-2xl mb-6 relative ${bgType === "solid" ? "bg-white dark:bg-[#050505]" : "bg-white/10 backdrop-blur-md border border-white/20"}`}>
           <div className="w-full h-full rounded-full overflow-hidden bg-gray-100 dark:bg-[#111] border border-black/5 dark:border-white/5">
             {profile.avatar_url ? (
               <img src={profile.avatar_url} alt={profile.display_name} className="w-full h-full object-cover" />
@@ -138,16 +147,17 @@ export default function ProfileView({ profile, links }: ProfileViewProps) {
 
         {/* Name & Bio */}
         <div className="text-center mb-10 space-y-2">
-          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-[#111111] dark:text-white">
+          <h1 className={`text-3xl sm:text-4xl font-bold tracking-tight ${bgType === "image_fade" ? "text-white drop-shadow-md" : "text-[#111111] dark:text-white"}`}>
             {profile.display_name || profile.username}
           </h1>
-          <p className="text-base text-[#666666] dark:text-[#a1a1aa] max-w-md mx-auto leading-relaxed">
+          <p className={`text-base max-w-md mx-auto leading-relaxed ${bgType === "image_fade" ? "text-gray-200" : "text-[#666666] dark:text-[#a1a1aa]"}`}>
             {profile.bio || "Bienvenido a mi espacio digital."}
           </p>
         </div>
 
         {/* LINKS — styled from profile.button_style */}
-        <div className="w-full space-y-3">
+        {/* LINKS */}
+        <div className={`w-full ${isCard ? "grid grid-cols-2 gap-4" : "space-y-3"}`}>
           {links.map((link) => (
             <a
               key={link.id}
@@ -155,30 +165,53 @@ export default function ProfileView({ profile, links }: ProfileViewProps) {
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => handleLinkClick(link)}
-              className={`group flex items-center gap-4 px-5 py-4 transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.98] ${btnClass} ${
-                isOutline
-                  ? "bg-transparent border-2 hover:opacity-80"
-                  : "bg-[#111111] dark:bg-white border border-transparent hover:opacity-90 shadow-md hover:shadow-lg"
-              }`}
-              style={isOutline ? { borderColor: themeColor, color: themeColor } : {}}
+              className={
+                isCard
+                  ? `group relative aspect-[4/5] w-full overflow-hidden flex flex-col justify-end transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] ${btnClass} shadow-xl border border-white/10`
+                  : `group flex items-center gap-4 px-5 py-4 transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.98] ${btnClass} ${
+                      isOutline
+                        ? "bg-transparent border-2 hover:opacity-80"
+                        : "bg-[#111111] dark:bg-white border border-transparent hover:opacity-90 shadow-md hover:shadow-lg"
+                    }`
+              }
+              style={!isCard && isOutline ? { borderColor: themeColor, color: themeColor } : {}}
             >
-              <div className={`w-9 h-9 flex items-center justify-center rounded-xl flex-shrink-0 ${
-                isOutline ? "bg-black/5" : "bg-white/10"
-              }`}>
-                <PlatformIcon
-                  id={link.icon}
-                  className={`w-5 h-5 ${isOutline ? "" : "text-white dark:text-black"}`}
-                />
-              </div>
-              <span className={`font-bold text-base flex-1 text-left ${isOutline ? "" : "text-white dark:text-black"}`}>
-                {link.title}
-              </span>
-              <svg
-                className={`w-4 h-4 opacity-50 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all ${isOutline ? "" : "text-white dark:text-black"}`}
-                fill="none" viewBox="0 0 24 24" stroke="currentColor"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
+              {isCard ? (
+                <>
+                  <div className="absolute inset-0 bg-gray-800">
+                    <img src={link.thumbnail_url || `https://source.unsplash.com/random/400x500?${link.title}`} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-500" alt={link.title} />
+                  </div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                  <div className="relative z-10 p-4 w-full text-center">
+                    <div className="w-8 h-8 mx-auto mb-2 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/20">
+                      <PlatformIcon id={link.icon} className="w-4 h-4 text-white" />
+                    </div>
+                    <span className="font-bold text-white text-sm line-clamp-2">
+                      {link.title}
+                    </span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className={`w-9 h-9 flex items-center justify-center rounded-xl flex-shrink-0 ${
+                    isOutline ? "bg-black/5" : "bg-white/10"
+                  }`}>
+                    <PlatformIcon
+                      id={link.icon}
+                      className={`w-5 h-5 ${isOutline ? "" : "text-white dark:text-black"}`}
+                    />
+                  </div>
+                  <span className={`font-bold text-base flex-1 text-left ${isOutline ? "" : "text-white dark:text-black"}`}>
+                    {link.title}
+                  </span>
+                  <svg
+                    className={`w-4 h-4 opacity-50 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all ${isOutline ? "" : "text-white dark:text-black"}`}
+                    fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </>
+              )}
             </a>
           ))}
 

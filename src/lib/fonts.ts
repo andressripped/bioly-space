@@ -23,6 +23,7 @@ const clash = Chivo({ subsets: ["latin"], weight: ["400", "700", "900"], display
 const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"], weight: ["400", "500", "600", "700", "800"], display: "swap" });
 
 export const FONT_CLASSES: Record<string, string> = {
+  system: "font-system",
   inter: inter.className,
   serif: serif.className,
   mono: mono.className,
@@ -36,6 +37,7 @@ export const FONT_CLASSES: Record<string, string> = {
 };
 
 export const FONT_OPTIONS = [
+  { id: "system", label: "Apple System", tier: "free" },
   { id: "inter", label: "Inter", tier: "free" },
   { id: "serif", label: "Serif", tier: "free" },
   { id: "mono", label: "Mono", tier: "free" },

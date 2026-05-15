@@ -5,14 +5,28 @@ export interface TemplateConfig {
   name: string;
   tier: TemplateTier;
   theme_color: string;
-  button_style: "rounded" | "pill" | "square" | "outline";
+  button_style: "rounded" | "pill" | "square" | "outline" | "card";
   font_family: string;
-  background_type: "solid" | "gradient" | "image" | "animated";
+  background_type: "solid" | "gradient" | "image" | "animated" | "image_fade";
   background_value: string;
   background_blur: number;
+  layout_mode?: "classic" | "creator_fade";
 }
 
 export const BIOLY_TEMPLATES: TemplateConfig[] = [
+  // THE JANICE CLONE
+  {
+    id: "janice_clone",
+    name: "Janice Clone",
+    tier: "free",
+    theme_color: "#ffffff",
+    button_style: "card",
+    font_family: "system",
+    background_type: "image_fade",
+    background_value: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&auto=format&fit=crop&q=60", // Beach placeholder
+    background_blur: 0,
+    layout_mode: "creator_fade",
+  },
   // FREE TEMPLATES
   {
     id: "default",

@@ -21,6 +21,7 @@ export const BUTTON_STYLE_MAP: Record<string, string> = {
   pill:    "rounded-full",
   square:  "rounded-md",
   outline: "rounded-2xl",
+  card:    "rounded-3xl",
 };
 
 const THEME_COLORS = [
@@ -33,6 +34,7 @@ const BUTTON_STYLES = [
   { id: "pill",    label: "Píldora"    },
   { id: "square",  label: "Cuadrado"  },
   { id: "outline", label: "Outline"   },
+  { id: "card",    label: "Tarjeta (Card)" },
 ];
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -61,9 +63,10 @@ export default function ProfileClient({ user }: { user: any }) {
 
   // Appearance
   const [templateId, setTemplateId]             = useState("default");
-  const [backgroundType, setBackgroundType]     = useState<"solid" | "gradient" | "image" | "animated">("solid");
+  const [backgroundType, setBackgroundType]     = useState<"solid" | "gradient" | "image" | "animated" | "image_fade">("solid");
   const [backgroundValue, setBackgroundValue]   = useState("#fcfcfc");
   const [backgroundBlur, setBackgroundBlur]     = useState(0);
+  const [layoutMode, setLayoutMode]             = useState<"classic" | "creator_fade">("classic");
 
   const [themeColor, setThemeColor]     = useState("#111111");
   const [buttonStyle, setButtonStyle]   = useState("rounded");
@@ -95,6 +98,7 @@ export default function ProfileClient({ user }: { user: any }) {
           setBackgroundType(profile.background_type || "solid");
           setBackgroundValue(profile.background_value || "#fcfcfc");
           setBackgroundBlur(profile.background_blur || 0);
+          setLayoutMode(profile.layout_mode || "classic");
           setSeoTitle(profile.seo_title || "");
           setSeoDescription(profile.seo_description || "");
           setUserPlan(profile.plan || "free");
@@ -155,6 +159,7 @@ export default function ProfileClient({ user }: { user: any }) {
         background_type: backgroundType,
         background_value: backgroundValue,
         background_blur: backgroundBlur,
+        layout_mode: layoutMode,
         seo_title:    seoTitle,
         seo_description: seoDescription,
         updated_at:   new Date().toISOString(),
@@ -200,6 +205,7 @@ export default function ProfileClient({ user }: { user: any }) {
     setBackgroundType(template.background_type);
     setBackgroundValue(template.background_value);
     setBackgroundBlur(template.background_blur);
+    setLayoutMode(template.layout_mode || "classic");
   };
 
   const downloadQR = () => {
@@ -218,6 +224,7 @@ export default function ProfileClient({ user }: { user: any }) {
   // Derived style classes used in BOTH preview and public page
   const btnClass = BUTTON_STYLE_MAP[buttonStyle] ?? "rounded-2xl";
   const isOutline = buttonStyle === "outline";
+  const isCard = buttonStyle === "card";
   const fontClass = FONT_CLASSES[fontFamily] || FONT_CLASSES["inter"];
 
   if (loading) {
@@ -638,7 +645,7 @@ export default function ProfileClient({ user }: { user: any }) {
                 ${activeDevice === "mobile"  ? "w-[320px] h-[640px] rounded-[3rem] border-[10px] border-[#111]" : ""}
               `}
               style={{
-                background: backgroundType === "gradient" ? backgroundValue : backgroundType === "solid" ? backgroundValue : "#ffffff",
+                background: backgroundType === "gradient" ? backgroundValue : backgroundType === "solid" ? backgroundValue : "#000000",
               }}
             >
               <div className={`flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden relative z-10 ${fontClass}`}>
@@ -649,11 +656,17 @@ export default function ProfileClient({ user }: { user: any }) {
                 {backgroundType === "gradient" && (
                   <div className="w-full h-12" /> // spacer instead of solid banner for gradients
                 )}
+                {backgroundType === "image_fade" && (
+                  <div className="absolute top-0 left-0 w-full h-[60%] z-0">
+                    <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${backgroundValue})` }} />
+                    <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/40 to-black" />
+                  </div>
+                )}
 
                 {/* Content */}
-                <div className={`px-5 text-center pb-16 ${backgroundType === "solid" ? "-mt-10" : "mt-4"}`}>
+                <div className={`px-5 text-center pb-16 relative z-10 ${backgroundType === "solid" ? "-mt-10" : backgroundType === "image_fade" ? "pt-24" : "mt-4"}`}>
                   {/* Avatar */}
-                  <div className="w-20 h-20 mx-auto rounded-full bg-white dark:bg-[#0a0a0a] p-1 shadow-lg mb-3 border border-black/5">
+                  <div className={`w-20 h-20 mx-auto rounded-full p-1 shadow-lg mb-3 border ${backgroundType === "image_fade" ? "bg-white/10 backdrop-blur-md border-white/20" : "bg-white dark:bg-[#0a0a0a] border-black/5"}`}>
                     <div className="w-full h-full rounded-full bg-gray-200 dark:bg-gray-800 overflow-hidden">
                       {avatarUrl
                         ? <img src={avatarUrl} alt="Preview" className="w-full h-full object-cover" />
@@ -666,24 +679,47 @@ export default function ProfileClient({ user }: { user: any }) {
                   <p className="text-xs text-[#555555] dark:text-[#a1a1aa] mb-6 leading-relaxed">{bio || "Tu biografía..."}</p>
 
                   {/* Links — EXACTLY matching ProfileView rendering */}
-                  <div className="space-y-2.5 max-w-[260px] mx-auto">
+                  <div className={`w-full max-w-[260px] mx-auto ${isCard ? "grid grid-cols-2 gap-3" : "space-y-2.5"}`}>
                     {links.length > 0 ? links.map((link) => (
                       <div
                         key={link.id}
-                        className={`w-full flex items-center gap-3 px-4 py-3.5 border transition-all ${btnClass} ${
-                          isOutline
-                            ? "border-2 bg-transparent"
-                            : "bg-[#111111] dark:bg-white border-transparent"
-                        }`}
-                        style={isOutline ? { borderColor: themeColor, color: themeColor } : {}}
+                        className={
+                          isCard
+                            ? `group relative aspect-[4/5] w-full overflow-hidden flex flex-col justify-end transition-all duration-300 ${btnClass} shadow-xl border border-white/10`
+                            : `w-full flex items-center gap-3 px-4 py-3.5 border transition-all ${btnClass} ${
+                                isOutline
+                                  ? "border-2 bg-transparent"
+                                  : "bg-[#111111] dark:bg-white border-transparent"
+                              }`
+                        }
+                        style={!isCard && isOutline ? { borderColor: themeColor, color: themeColor } : {}}
                       >
-                        <PlatformIcon
-                          id={link.icon}
-                          className={`w-4 h-4 flex-shrink-0 ${isOutline ? "" : "text-white dark:text-black"}`}
-                        />
-                        <span className={`text-xs font-bold truncate flex-1 text-left ${isOutline ? "" : "text-white dark:text-black"}`}>
-                          {link.title}
-                        </span>
+                        {isCard ? (
+                          <>
+                            <div className="absolute inset-0 bg-gray-800">
+                              <img src={link.thumbnail_url || `https://source.unsplash.com/random/400x500?${link.title}`} className="w-full h-full object-cover opacity-80" alt={link.title} />
+                            </div>
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                            <div className="relative z-10 p-3 w-full text-center">
+                              <div className="w-6 h-6 mx-auto mb-1 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/20">
+                                <PlatformIcon id={link.icon} className="w-3 h-3 text-white" />
+                              </div>
+                              <span className="font-bold text-white text-[10px] line-clamp-2 leading-tight">
+                                {link.title}
+                              </span>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <PlatformIcon
+                              id={link.icon}
+                              className={`w-4 h-4 flex-shrink-0 ${isOutline ? "" : "text-white dark:text-black"}`}
+                            />
+                            <span className={`text-xs font-bold truncate flex-1 text-left ${isOutline ? "" : "text-white dark:text-black"}`}>
+                              {link.title}
+                            </span>
+                          </>
+                        )}
                       </div>
                     )) : (
                       // Placeholder links when empty
