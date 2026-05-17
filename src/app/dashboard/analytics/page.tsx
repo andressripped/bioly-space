@@ -23,24 +23,17 @@ export default async function AnalyticsPage() {
     redirect("/onboarding");
   }
 
-  // 2. Fetch all analytics for this profile
-  let analyticsQuery = supabase
+  // 2. Fetch all analytics for this profile based on plan timeframe (7 or 30 days)
+  const rangeDays = (!profile.plan || profile.plan === "free") ? 7 : 30;
+  const cutoffDate = new Date();
+  cutoffDate.setDate(cutoffDate.getDate() - rangeDays);
+
+  const { data: analyticsData, error: analyticsError } = await supabase
     .from("analytics")
     .select("*")
     .eq("profile_id", profile.id)
+    .gte("created_at", cutoffDate.toISOString())
     .order("created_at", { ascending: false });
-
-  if (!profile.plan || profile.plan === "free") {
-    // Free: Solo últimos 7 días
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    analyticsQuery = analyticsQuery.gte("created_at", sevenDaysAgo.toISOString());
-  } else {
-    // Pro/Business: Histórico completo (limitamos a 5000 por rendimiento)
-    analyticsQuery = analyticsQuery.limit(5000);
-  }
-
-  const { data: analyticsData, error: analyticsError } = await analyticsQuery;
 
   // 3. Fetch links to map link_id to title
   const { data: links } = await supabase
