@@ -23,45 +23,43 @@ export default async function AnalyticsPage() {
     redirect("/onboarding");
   }
 
-  // 2. Fetch all analytics for this profile (with pagination to bypass Supabase's 1000 Max Rows limit)
-  let analyticsData: any[] = [];
-  let analyticsError: any = null;
-  let page = 0;
-  const pageSize = 1000;
-  let hasMore = true;
-
+  // 2. Fetch daily and dimension summaries based on plan timeframe (7 days for free, all time for pro/business)
   const isFree = !profile.plan || profile.plan === "free";
 
-  while (hasMore) {
-    let query = supabase
-      .from("analytics")
-      .select("*")
-      .eq("profile_id", profile.id)
-      .order("created_at", { ascending: false })
-      .range(page * pageSize, (page + 1) * pageSize - 1);
+  let dailyQuery = supabase
+    .from("analytics_daily_summary")
+    .select("date, views_count, clicks_count")
+    .eq("profile_id", profile.id)
+    .order("date", { ascending: false });
 
-    if (isFree) {
-      const cutoffDate = new Date();
-      cutoffDate.setDate(cutoffDate.getDate() - 7);
-      query = query.gte("created_at", cutoffDate.toISOString());
-    }
+  let dimensionQuery = supabase
+    .from("analytics_dimension_summary")
+    .select("date, dimension_type, dimension_value, event_type, count")
+    .eq("profile_id", profile.id);
 
-    const { data, error } = await query;
+  let sharesQuery = supabase
+    .from("analytics")
+    .select("created_at")
+    .eq("profile_id", profile.id)
+    .eq("event_type", "share");
 
-    if (error) {
-      analyticsError = error;
-      hasMore = false;
-    } else if (!data || data.length === 0) {
-      hasMore = false;
-    } else {
-      analyticsData = [...analyticsData, ...data];
-      if (data.length < pageSize) {
-        hasMore = false;
-      } else {
-        page++;
-      }
-    }
+  if (isFree) {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - 7);
+    const cutoffStr = cutoffDate.toISOString().split("T")[0]; // YYYY-MM-DD
+    const cutoffISO = cutoffDate.toISOString();
+
+    dailyQuery = dailyQuery.gte("date", cutoffStr);
+    dimensionQuery = dimensionQuery.gte("date", cutoffStr);
+    sharesQuery = sharesQuery.gte("created_at", cutoffISO);
   }
+
+  const { data: dailyData, error: dailyError } = await dailyQuery;
+  const { data: dimensionData, error: dimensionError } = await dimensionQuery;
+  const { data: sharesData } = await sharesQuery;
+
+  if (dailyError) console.error("DAILY_SUMMARY_ERROR:", dailyError);
+  if (dimensionError) console.error("DIMENSION_SUMMARY_ERROR:", dimensionError);
 
   // 3. Fetch links to map link_id to title
   const { data: links } = await supabase
@@ -88,7 +86,9 @@ export default async function AnalyticsPage() {
       </div>
 
       <AnalyticsClient
-        rawData={analyticsData || []}
+        dailyData={dailyData || []}
+        dimensionData={dimensionData || []}
+        sharesData={sharesData || []}
         links={links || []}
         subscribers={subscribers || []}
         plan={profile.plan || "free"}

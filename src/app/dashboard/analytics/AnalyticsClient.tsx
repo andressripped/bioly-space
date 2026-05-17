@@ -22,28 +22,46 @@ import { Eye, MousePointerClick, TrendingUp, Users, Mail, Lock, Calendar } from 
 const COLORS = ['#111111', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'];
 
 interface AnalyticsClientProps {
-  rawData: any[];
+  dailyData: any[];
+  dimensionData: any[];
+  sharesData: any[];
   links: any[];
   subscribers: any[];
   plan: string;
 }
 
-export default function AnalyticsClient({ rawData, links, subscribers, plan }: AnalyticsClientProps) {
+export default function AnalyticsClient({ dailyData, dimensionData, sharesData, links, subscribers, plan }: AnalyticsClientProps) {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [timeRange, setTimeRange] = useState<7 | 30 | "all">(7);
 
   // Filtrar datos según el rango de tiempo seleccionado
-  const filteredData = useMemo(() => {
-    if (timeRange === "all") return rawData;
+  const filteredDaily = useMemo(() => {
+    if (timeRange === "all") return dailyData;
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - timeRange);
-    return rawData.filter(e => new Date(e.created_at) >= cutoff);
-  }, [rawData, timeRange]);
+    const cutoffStr = cutoff.toISOString().split("T")[0]; // YYYY-MM-DD
+    return dailyData.filter(d => d.date >= cutoffStr);
+  }, [dailyData, timeRange]);
+
+  const filteredDimension = useMemo(() => {
+    if (timeRange === "all") return dimensionData;
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - timeRange);
+    const cutoffStr = cutoff.toISOString().split("T")[0]; // YYYY-MM-DD
+    return dimensionData.filter(d => d.date >= cutoffStr);
+  }, [dimensionData, timeRange]);
+
+  const filteredShares = useMemo(() => {
+    if (timeRange === "all") return sharesData;
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - timeRange);
+    return sharesData.filter(s => new Date(s.created_at) >= cutoff);
+  }, [sharesData, timeRange]);
 
   // Recalcular KPIs basados en el filtro
-  const pageViews = filteredData.filter((e) => e.event_type === "page_view").length;
-  const linkClicks = filteredData.filter((e) => e.event_type === "link_click").length;
-  const shares = filteredData.filter((e) => e.event_type === "share").length;
+  const pageViews = filteredDaily.reduce((sum, d) => sum + (d.views_count || 0), 0);
+  const linkClicks = filteredDaily.reduce((sum, d) => sum + (d.clicks_count || 0), 0);
+  const shares = filteredShares.length;
   const ctr = pageViews > 0 ? ((linkClicks / pageViews) * 100).toFixed(1) : "0.0";
 
   // Agrupar por fecha para la gráfica de área
@@ -61,19 +79,11 @@ export default function AnalyticsClient({ rawData, links, subscribers, plan }: A
       dataByDate[dateStr] = { date: dateStr, views: 0, clicks: 0 };
     }
 
-    const eventsToGroup = timeRange === "all"
-      ? rawData.filter(e => {
-          const cutoff = new Date();
-          cutoff.setDate(cutoff.getDate() - 30);
-          return new Date(e.created_at) >= cutoff;
-        })
-      : filteredData;
-
-    eventsToGroup.forEach((event) => {
-      const dateStr = new Date(event.created_at).toISOString().split("T")[0];
+    filteredDaily.forEach((event) => {
+      const dateStr = event.date; // already YYYY-MM-DD format from DB
       if (dataByDate[dateStr]) {
-        if (event.event_type === "page_view") dataByDate[dateStr].views += 1;
-        if (event.event_type === "link_click") dataByDate[dateStr].clicks += 1;
+        dataByDate[dateStr].views += event.views_count || 0;
+        dataByDate[dateStr].clicks += event.clicks_count || 0;
       }
     });
 
@@ -81,42 +91,49 @@ export default function AnalyticsClient({ rawData, links, subscribers, plan }: A
       ...item,
       dateShort: new Date(item.date).toLocaleDateString("es-ES", { day: '2-digit', month: 'short' })
     }));
-  }, [filteredData, rawData, timeRange]);
+  }, [filteredDaily, timeRange]);
 
   // Agrupar clicks por link
   const linkPerformance = useMemo(() => {
     const clicksByLink: Record<string, number> = {};
-    filteredData.filter(e => e.event_type === "link_click").forEach(event => {
-      if (event.link_id) {
-        clicksByLink[event.link_id] = (clicksByLink[event.link_id] || 0) + 1;
-      }
-    });
+    
+    filteredDimension
+      .filter(d => d.dimension_type === "link" && d.event_type === "link_click")
+      .forEach(d => {
+        clicksByLink[d.dimension_value] = (clicksByLink[d.dimension_value] || 0) + (d.count || 0);
+      });
 
     return links.map(link => ({
       title: link.title,
       clicks: clicksByLink[link.id] || 0
     })).sort((a, b) => b.clicks - a.clicks).slice(0, 5);
-  }, [filteredData, links]);
+  }, [filteredDimension, links]);
 
   // Agrupar dispositivos
   const deviceData = useMemo(() => {
     const counts: Record<string, number> = {};
-    filteredData.filter(e => e.event_type === "page_view").forEach(e => {
-      const dev = e.device || "unknown";
-      counts[dev] = (counts[dev] || 0) + 1;
-    });
+    
+    filteredDimension
+      .filter(d => d.dimension_type === "device" && d.event_type === "page_view")
+      .forEach(d => {
+        counts[d.dimension_value] = (counts[d.dimension_value] || 0) + (d.count || 0);
+      });
+      
     return Object.entries(counts).map(([name, value]) => ({ name, value }));
-  }, [filteredData]);
+  }, [filteredDimension]);
 
   // Agrupar navegadores
   const browserData = useMemo(() => {
     const counts: Record<string, number> = {};
-    filteredData.filter(e => e.event_type === "page_view").forEach(e => {
-      const browser = e.browser || "unknown";
-      counts[browser] = (counts[browser] || 0) + 1;
-    });
+    
+    filteredDimension
+      .filter(d => d.dimension_type === "browser" && d.event_type === "page_view")
+      .forEach(d => {
+        counts[d.dimension_value] = (counts[d.dimension_value] || 0) + (d.count || 0);
+      });
+      
     return Object.entries(counts).map(([name, value]) => ({ name, value }));
-  }, [filteredData]);
+  }, [filteredDimension]);
 
 
   return (
