@@ -51,7 +51,6 @@ export default async function AnalyticsPage() {
     const cutoffISO = cutoffDate.toISOString();
 
     dailyQuery = dailyQuery.gte("date", cutoffStr);
-    dimensionQuery = dimensionQuery.gte("date", cutoffStr);
     sharesQuery = sharesQuery.gte("created_at", cutoffISO);
   }
 
@@ -61,6 +60,15 @@ export default async function AnalyticsPage() {
 
   if (dailyError) console.error("DAILY_SUMMARY_ERROR:", dailyError);
   if (dimensionError) console.error("DIMENSION_SUMMARY_ERROR:", dimensionError);
+
+  // TEMPORARY LOCAL DIAGNOSTIC DUMP
+  try {
+    const fs = require("fs");
+    const path = require("path");
+    fs.writeFileSync(path.join(process.cwd(), "dimension_debug.json"), JSON.stringify(dimensionData, null, 2));
+  } catch (e: any) {
+    console.error("Debug write failed:", e.message);
+  }
 
   // 3. Fetch links to map link_id to title (uses user_id column)
   const { data: links } = await supabase

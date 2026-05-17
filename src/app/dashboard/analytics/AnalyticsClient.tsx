@@ -103,6 +103,7 @@ export default function AnalyticsClient({
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [timeRange, setTimeRange] = useState<7 | 30 | "all">(7);
   const [activeTab, setActiveTab] = useState<"general" | "advanced">("general");
+  const [realtimeStatus, setRealtimeStatus] = useState<string>("CONNECTING");
 
   // Local state to support real-time WebSocket updates
   const [localDaily, setLocalDaily] = useState(dailyData);
@@ -154,8 +155,11 @@ export default function AnalyticsClient({
           if (dim) setLocalDimension(dim);
           if (shares) setLocalShares(shares);
         }
-      )
-      .subscribe();
+      );
+      
+    channel.subscribe((status) => {
+      setRealtimeStatus(status);
+    });
       
     return () => {
       supabase.removeChannel(channel);
@@ -323,9 +327,22 @@ export default function AnalyticsClient({
   return (
     <div className="space-y-8">
       {/* DIAGNOSTIC BADGE */}
-      <div className="text-xs font-mono p-3 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 rounded-2xl border border-red-100 dark:border-red-950/50">
-        Debug: daily={localDaily?.length ?? 0}, dim={localDimension?.length ?? 0}, plan={plan}, id={profileId}
-      </div>
+      {(() => {
+        const types: Record<string, number> = {};
+        localDimension.forEach((d: any) => {
+          const key = `${d.dimension_type}:${d.event_type}`;
+          types[key] = (types[key] || 0) + 1;
+        });
+        const debugTypes = Object.entries(types)
+          .map(([k, v]) => `${k}(${v})`)
+          .join(", ");
+        return (
+          <div className="text-xs font-mono p-3 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 rounded-2xl border border-red-100 dark:border-red-950/50 space-y-1">
+            <div>Debug: daily={localDaily?.length ?? 0}, dim={localDimension?.length ?? 0}, plan={plan}, id={profileId}, ws={realtimeStatus}</div>
+            <div className="text-[10px] opacity-85">Datos recibidos: {debugTypes || "ninguno"}</div>
+          </div>
+        );
+      })()}
 
       {/* KPI CARDS CON ANIMACIÓN DE ODÓMETRO */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
