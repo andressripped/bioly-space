@@ -35,7 +35,9 @@ export default async function AnalyticsPage() {
   let dimensionQuery = supabase
     .from("analytics_dimension_summary")
     .select("date, dimension_type, dimension_value, event_type, count")
-    .eq("profile_id", profile.id);
+    .eq("profile_id", profile.id)
+    .in("dimension_type", ["device", "browser", "link"])
+    .range(0, 4999);
 
   let sharesQuery = supabase
     .from("analytics")
@@ -78,7 +80,7 @@ export default async function AnalyticsPage() {
     <main className="w-full p-6 md:p-12 max-w-5xl mx-auto">
       <div className="mb-10 mt-16 md:mt-0">
         <h1 className="text-3xl font-serif font-bold text-[#111111] dark:text-white mb-2">
-          Analíticas y Audiencia (Diarias: {dailyData?.length ?? 0}, Dim: {dimensionData?.length ?? 0})
+          Analíticas y Audiencia
         </h1>
         <p className="text-[#555555] dark:text-[#a1a1aa]">
           Mide el impacto de tu identidad digital y tu lista de correos.
