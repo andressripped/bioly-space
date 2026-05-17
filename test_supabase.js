@@ -26,23 +26,23 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-async function runRecentCount() {
-  console.log("Querying database for the 20 absolute most recent rows in 'analytics'...");
+async function runPolicyInspection() {
+  console.log("Inspecting RLS policies on 'analytics'...");
 
-  const { data: rows, error: countError } = await supabase
+  // Try to query the policy rules from pg_policies via a raw postgres call
+  // Since we might not have raw SQL execution, we'll try to perform a dummy SELECT 
+  // mimicking an authenticated session or checking for SELECT errors.
+  
+  const { data, error } = await supabase
     .from("analytics")
-    .select("profile_id, event_type, referrer, created_at")
-    .order("created_at", { ascending: false })
-    .limit(20);
-
-  if (countError) {
-    console.error("❌ Error fetching analytics:", countError);
+    .select("*")
+    .limit(1);
+    
+  if (error) {
+    console.error("❌ SELECT error on analytics:", error);
   } else {
-    console.log(`✅ Fetched the most recent ${rows.length} rows successfully.`);
-    rows.forEach((r, idx) => {
-      console.log(`${idx + 1}. Profile: ${r.profile_id} | Event: ${r.event_type} | Ref: ${r.referrer} | Created At: ${r.created_at}`);
-    });
+    console.log("✅ SELECT successful! Rows returned:", data);
   }
 }
 
-runRecentCount();
+runPolicyInspection();
