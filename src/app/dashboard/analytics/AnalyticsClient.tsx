@@ -129,31 +129,44 @@ export default function AnalyticsClient({
           event: "INSERT",
           schema: "public",
           table: "analytics",
-          filter: `profile_id=eq.${profileId}`,
         },
         async () => {
-          // Fetch updated pre-aggregated summary tables
-          const { data: daily } = await supabase
-            .from("analytics_daily_summary")
-            .select("date, views_count, clicks_count")
-            .eq("profile_id", profileId)
-            .order("date", { ascending: false });
-            
-          const { data: dim } = await supabase
-            .from("analytics_dimension_summary")
-            .select("date, dimension_type, dimension_value, event_type, count")
-            .eq("profile_id", profileId)
-            .range(0, 4999);
-            
-          const { data: shares } = await supabase
-            .from("analytics")
-            .select("created_at")
-            .eq("profile_id", profileId)
-            .eq("event_type", "share");
-            
-          if (daily) setLocalDaily(daily);
-          if (dim) setLocalDimension(dim);
-          if (shares) setLocalShares(shares);
+          // Wait 500ms to ensure the database trigger has fully committed the aggregations
+          setTimeout(async () => {
+            // Fetch updated pre-aggregated summary tables in parallel to bypass PostgREST 1000 row limits
+            const [
+              { data: daily },
+              { data: shares },
+              { data: ref },
+              { data: cou },
+              { data: cit },
+              { data: dev },
+              { data: bro },
+              { data: lin }
+            ] = await Promise.all([
+              supabase.from("analytics_daily_summary").select("date, views_count, clicks_count").eq("profile_id", profileId).order("date", { ascending: false }),
+              supabase.from("analytics").select("created_at").eq("profile_id", profileId).eq("event_type", "share"),
+              supabase.from("analytics_dimension_summary").select("date, dimension_value, event_type, count").eq("profile_id", profileId).eq("dimension_type", "referrer"),
+              supabase.from("analytics_dimension_summary").select("date, dimension_value, event_type, count").eq("profile_id", profileId).eq("dimension_type", "country"),
+              supabase.from("analytics_dimension_summary").select("date, dimension_value, event_type, count").eq("profile_id", profileId).eq("dimension_type", "city"),
+              supabase.from("analytics_dimension_summary").select("date, dimension_value, event_type, count").eq("profile_id", profileId).eq("dimension_type", "device"),
+              supabase.from("analytics_dimension_summary").select("date, dimension_value, event_type, count").eq("profile_id", profileId).eq("dimension_type", "browser"),
+              supabase.from("analytics_dimension_summary").select("date, dimension_value, event_type, count").eq("profile_id", profileId).eq("dimension_type", "link"),
+            ]);
+
+            const dim = [
+              ...(ref || []).map(d => ({ ...d, dimension_type: "referrer" })),
+              ...(cou || []).map(d => ({ ...d, dimension_type: "country" })),
+              ...(cit || []).map(d => ({ ...d, dimension_type: "city" })),
+              ...(dev || []).map(d => ({ ...d, dimension_type: "device" })),
+              ...(bro || []).map(d => ({ ...d, dimension_type: "browser" })),
+              ...(lin || []).map(d => ({ ...d, dimension_type: "link" })),
+            ];
+
+            if (daily) setLocalDaily(daily);
+            if (shares) setLocalShares(shares);
+            setLocalDimension(dim);
+          }, 500);
         }
       );
       
@@ -327,22 +340,7 @@ export default function AnalyticsClient({
   return (
     <div className="space-y-8">
       {/* DIAGNOSTIC BADGE */}
-      {(() => {
-        const types: Record<string, number> = {};
-        localDimension.forEach((d: any) => {
-          const key = `${d.dimension_type}:${d.event_type}`;
-          types[key] = (types[key] || 0) + 1;
-        });
-        const debugTypes = Object.entries(types)
-          .map(([k, v]) => `${k}(${v})`)
-          .join(", ");
-        return (
-          <div className="text-xs font-mono p-3 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 rounded-2xl border border-red-100 dark:border-red-950/50 space-y-1">
-            <div>Debug: daily={localDaily?.length ?? 0}, dim={localDimension?.length ?? 0}, plan={plan}, id={profileId}, ws={realtimeStatus}</div>
-            <div className="text-[10px] opacity-85">Datos recibidos: {debugTypes || "ninguno"}</div>
-          </div>
-        );
-      })()}
+
 
       {/* KPI CARDS CON ANIMACIÓN DE ODÓMETRO */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

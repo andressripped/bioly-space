@@ -32,12 +32,6 @@ export default async function AnalyticsPage() {
     .eq("profile_id", profile.id)
     .order("date", { ascending: false });
 
-  let dimensionQuery = supabase
-    .from("analytics_dimension_summary")
-    .select("date, dimension_type, dimension_value, event_type, count")
-    .eq("profile_id", profile.id)
-    .range(0, 4999);
-
   let sharesQuery = supabase
     .from("analytics")
     .select("created_at")
@@ -55,20 +49,52 @@ export default async function AnalyticsPage() {
   }
 
   const { data: dailyData, error: dailyError } = await dailyQuery;
-  const { data: dimensionData, error: dimensionError } = await dimensionQuery;
   const { data: sharesData } = await sharesQuery;
 
   if (dailyError) console.error("DAILY_SUMMARY_ERROR:", dailyError);
-  if (dimensionError) console.error("DIMENSION_SUMMARY_ERROR:", dimensionError);
 
-  // TEMPORARY LOCAL DIAGNOSTIC DUMP
-  try {
-    const fs = require("fs");
-    const path = require("path");
-    fs.writeFileSync(path.join(process.cwd(), "dimension_debug.json"), JSON.stringify(dimensionData, null, 2));
-  } catch (e: any) {
-    console.error("Debug write failed:", e.message);
-  }
+  // Parallel Query Execution per Dimension type to bypass PostgREST 1000 row limits
+  const buildDimQuery = (type: string) => {
+    let q = supabase
+      .from("analytics_dimension_summary")
+      .select("date, dimension_value, event_type, count")
+      .eq("profile_id", profile.id)
+      .eq("dimension_type", type);
+    
+    if (isFree) {
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - 7);
+      const cutoffStr = cutoff.toISOString().split("T")[0];
+      q = q.gte("date", cutoffStr);
+    }
+    return q;
+  };
+
+  const [
+    { data: referrerData },
+    { data: countryData },
+    { data: cityData },
+    { data: deviceData },
+    { data: browserData },
+    { data: linkData }
+  ] = await Promise.all([
+    buildDimQuery("referrer"),
+    buildDimQuery("country"),
+    buildDimQuery("city"),
+    buildDimQuery("device"),
+    buildDimQuery("browser"),
+    buildDimQuery("link")
+  ]);
+
+  // Combine parallel responses back into a single structured list
+  const dimensionData = [
+    ...(referrerData || []).map(d => ({ ...d, dimension_type: "referrer" })),
+    ...(countryData || []).map(d => ({ ...d, dimension_type: "country" })),
+    ...(cityData || []).map(d => ({ ...d, dimension_type: "city" })),
+    ...(deviceData || []).map(d => ({ ...d, dimension_type: "device" })),
+    ...(browserData || []).map(d => ({ ...d, dimension_type: "browser" })),
+    ...(linkData || []).map(d => ({ ...d, dimension_type: "link" })),
+  ];
 
   // 3. Fetch links to map link_id to title (uses user_id column)
   const { data: links } = await supabase
