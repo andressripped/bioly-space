@@ -78,7 +78,7 @@ export default async function AnalyticsPage() {
     <main className="w-full p-6 md:p-12 max-w-5xl mx-auto">
       <div className="mb-10 mt-16 md:mt-0">
         <h1 className="text-3xl font-serif font-bold text-[#111111] dark:text-white mb-2">
-          Analíticas y Audiencia
+          Analíticas y Audiencia (Diarias: {dailyData?.length ?? 0}, Dim: {dimensionData?.length ?? 0})
         </h1>
         <p className="text-[#555555] dark:text-[#a1a1aa]">
           Mide el impacto de tu identidad digital y tu lista de correos.
