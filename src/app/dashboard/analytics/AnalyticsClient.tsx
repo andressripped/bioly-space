@@ -322,6 +322,11 @@ export default function AnalyticsClient({
 
   return (
     <div className="space-y-8">
+      {/* DIAGNOSTIC BADGE */}
+      <div className="text-xs font-mono p-3 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 rounded-2xl border border-red-100 dark:border-red-950/50">
+        Debug: daily={localDaily?.length ?? 0}, dim={localDimension?.length ?? 0}, plan={plan}, id={profileId}
+      </div>
+
       {/* KPI CARDS CON ANIMACIÓN DE ODÓMETRO */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-white dark:bg-[#111] p-6 rounded-3xl border border-[#eeeeee] dark:border-[#222] shadow-sm">
