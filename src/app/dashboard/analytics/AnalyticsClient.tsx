@@ -30,10 +30,11 @@ interface AnalyticsClientProps {
 
 export default function AnalyticsClient({ rawData, links, subscribers, plan }: AnalyticsClientProps) {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const [timeRange, setTimeRange] = useState<7 | 30>(7);
+  const [timeRange, setTimeRange] = useState<7 | 30 | "all">(7);
 
   // Filtrar datos según el rango de tiempo seleccionado
   const filteredData = useMemo(() => {
+    if (timeRange === "all") return rawData;
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - timeRange);
     return rawData.filter(e => new Date(e.created_at) >= cutoff);
@@ -49,14 +50,26 @@ export default function AnalyticsClient({ rawData, links, subscribers, plan }: A
   const chartData = useMemo(() => {
     const dataByDate: Record<string, { date: string; views: number; clicks: number }> = {};
     
-    for (let i = timeRange - 1; i >= 0; i--) {
+    // Si es "Todo", graficamos los últimos 30 días para evitar saturar el gráfico de barritas,
+    // pero las tarjetas superiores y demás métricas sí muestran el acumulado histórico completo.
+    const days = timeRange === "all" ? 30 : timeRange;
+    
+    for (let i = days - 1; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
       const dateStr = d.toISOString().split("T")[0];
       dataByDate[dateStr] = { date: dateStr, views: 0, clicks: 0 };
     }
 
-    filteredData.forEach((event) => {
+    const eventsToGroup = timeRange === "all"
+      ? rawData.filter(e => {
+          const cutoff = new Date();
+          cutoff.setDate(cutoff.getDate() - 30);
+          return new Date(e.created_at) >= cutoff;
+        })
+      : filteredData;
+
+    eventsToGroup.forEach((event) => {
       const dateStr = new Date(event.created_at).toISOString().split("T")[0];
       if (dataByDate[dateStr]) {
         if (event.event_type === "page_view") dataByDate[dateStr].views += 1;
@@ -68,7 +81,7 @@ export default function AnalyticsClient({ rawData, links, subscribers, plan }: A
       ...item,
       dateShort: new Date(item.date).toLocaleDateString("es-ES", { day: '2-digit', month: 'short' })
     }));
-  }, [filteredData, timeRange]);
+  }, [filteredData, rawData, timeRange]);
 
   // Agrupar clicks por link
   const linkPerformance = useMemo(() => {
@@ -164,6 +177,19 @@ export default function AnalyticsClient({ rawData, links, subscribers, plan }: A
           >
             {plan === "free" && <Lock className="w-3 h-3 text-emerald-500" />}
             30 días
+          </button>
+          <button 
+            onClick={() => {
+              if (plan === "free") {
+                setShowUpgradeModal(true);
+                return;
+              }
+              setTimeRange("all");
+            }}
+            className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all flex items-center gap-2 ${timeRange === "all" ? "bg-white dark:bg-[#222] shadow-sm text-black dark:text-white" : "text-[#555] hover:text-black dark:hover:text-white"}`}
+          >
+            {plan === "free" && <Lock className="w-3 h-3 text-emerald-500" />}
+            Todo
           </button>
         </div>
       </div>
