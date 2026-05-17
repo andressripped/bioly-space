@@ -62,15 +62,15 @@ export default async function AnalyticsPage() {
   if (dailyError) console.error("DAILY_SUMMARY_ERROR:", dailyError);
   if (dimensionError) console.error("DIMENSION_SUMMARY_ERROR:", dimensionError);
 
-  // 3. Fetch links to map link_id to title
+  // 3. Fetch links to map link_id to title (uses user_id column)
   const { data: links } = await supabase
     .from("links")
     .select("id, title")
-    .eq("profile_id", profile.id);
+    .eq("user_id", user.id);
 
-  // 4. Fetch subscribers count
+  // 4. Fetch email subscribers (uses email_subscribers table)
   const { data: subscribers } = await supabase
-    .from("subscribers")
+    .from("email_subscribers")
     .select("id, email, created_at")
     .eq("profile_id", profile.id)
     .order("created_at", { ascending: false });
