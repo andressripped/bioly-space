@@ -1,3 +1,4 @@
+import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { createClient } from "@/utils/supabase/server";
 import { NextResponse } from "next/server";
 
@@ -30,7 +31,16 @@ export async function POST(request: Request) {
     const country = request.headers.get("x-vercel-ip-country") || null;
     const city = request.headers.get("x-vercel-ip-city") || null;
 
-    const supabase = await createClient();
+    // Si tenemos la Service Role Key (en Vercel/Producción), la usamos para saltarnos RLS completamente y registrar de forma segura
+    let supabase;
+    if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      supabase = createAdminClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY
+      );
+    } else {
+      supabase = await createClient();
+    }
 
     const { error } = await supabase.from("analytics").insert({
       profile_id,

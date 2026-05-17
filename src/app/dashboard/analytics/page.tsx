@@ -2,6 +2,8 @@ import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 import AnalyticsClient from "./AnalyticsClient";
 
+export const dynamic = "force-dynamic";
+
 export default async function AnalyticsPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -54,7 +56,7 @@ export default async function AnalyticsPage() {
     .order("created_at", { ascending: false });
 
   return (
-    <div className="flex-1 p-6 lg:p-10 lg:pl-10 ml-0 md:ml-[420px] max-h-screen overflow-y-auto w-full max-w-5xl mx-auto">
+    <main className="w-full p-6 md:p-12 max-w-5xl mx-auto">
       <div className="mb-10 mt-16 md:mt-0">
         <h1 className="text-3xl font-serif font-bold text-[#111111] dark:text-white mb-2">
           Analíticas y Audiencia
@@ -64,12 +66,12 @@ export default async function AnalyticsPage() {
         </p>
       </div>
 
-      <AnalyticsClient 
-        rawData={analyticsData || []} 
-        links={links || []} 
-        subscribers={subscribers || []} 
+      <AnalyticsClient
+        rawData={analyticsData || []}
+        links={links || []}
+        subscribers={subscribers || []}
         plan={profile.plan || "free"}
       />
-    </div>
+    </main>
   );
 }

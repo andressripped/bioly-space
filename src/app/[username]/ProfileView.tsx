@@ -6,6 +6,16 @@ import { Share2, Mail, Check, Loader2 } from "lucide-react";
 import { FONT_CLASSES } from "@/lib/fonts";
 import { renderWithAppleEmojis } from "@/utils/emoji";
 
+// Helper function to safely extract hostname from document.referrer without crashing on non-standard custom URLs (e.g., android-app://...)
+const getSafeReferrer = () => {
+  if (typeof window === "undefined" || !document.referrer) return "direct";
+  try {
+    return new URL(document.referrer).hostname || "direct";
+  } catch (e) {
+    return document.referrer || "direct";
+  }
+};
+
 // Same mapping as ProfileClient — single source of truth
 const BUTTON_STYLE_MAP: Record<string, string> = {
   rounded: "rounded-2xl",
@@ -49,7 +59,7 @@ export default function ProfileView({ profile, links }: ProfileViewProps) {
       body: JSON.stringify({
         profile_id: profile.id,
         event_type: "page_view",
-        referrer: document.referrer ? new URL(document.referrer).hostname : "direct",
+        referrer: getSafeReferrer(),
       }),
     }).catch(() => {});
   }, [profile.id]);
@@ -62,7 +72,7 @@ export default function ProfileView({ profile, links }: ProfileViewProps) {
         profile_id: profile.id,
         link_id: link.id,
         event_type: "link_click",
-        referrer: document.referrer ? new URL(document.referrer).hostname : "direct",
+        referrer: getSafeReferrer(),
       }),
     }).catch(() => {});
   };
