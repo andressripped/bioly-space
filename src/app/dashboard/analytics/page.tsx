@@ -36,7 +36,6 @@ export default async function AnalyticsPage() {
     .from("analytics_dimension_summary")
     .select("date, dimension_type, dimension_value, event_type, count")
     .eq("profile_id", profile.id)
-    .in("dimension_type", ["device", "browser", "link"])
     .range(0, 4999);
 
   let sharesQuery = supabase
@@ -67,12 +66,12 @@ export default async function AnalyticsPage() {
   const { data: links } = await supabase
     .from("links")
     .select("id, title")
-    .eq("user_id", user.id);
+    .eq("profile_id", profile.id);
 
-  // 4. Fetch subscribers
+  // 4. Fetch subscribers count
   const { data: subscribers } = await supabase
-    .from("email_subscribers")
-    .select("*")
+    .from("subscribers")
+    .select("id, email, created_at")
     .eq("profile_id", profile.id)
     .order("created_at", { ascending: false });
 
@@ -87,11 +86,12 @@ export default async function AnalyticsPage() {
         </p>
       </div>
 
-      <AnalyticsClient
-        dailyData={dailyData || []}
-        dimensionData={dimensionData || []}
+      <AnalyticsClient 
+        profileId={profile.id}
+        dailyData={dailyData || []} 
+        dimensionData={dimensionData || []} 
         sharesData={sharesData || []}
-        links={links || []}
+        links={links || []} 
         subscribers={subscribers || []}
         plan={profile.plan || "free"}
       />
