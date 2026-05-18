@@ -22,63 +22,72 @@ import { Eye, MousePointerClick, TrendingUp, Users, Mail, Lock, Calendar, Globe,
 
 const COLORS = ['#111111', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'];
 
-// Vanilla requestAnimationFrame rolling count animation (Ease-Out Cubic)
+// Helper to safely decode percent-encoded URL values (handling raw strings gracefully)
+function safeDecode(val: string): string {
+  if (!val) return "";
+  try {
+    return decodeURIComponent(val);
+  } catch (e) {
+    return val;
+  }
+}
+
+// Ultra-premium vertical digit slider Odometer (hardware-accelerated)
+function OdometerDigit({ digit }: { digit: string }) {
+  const isNumber = !isNaN(Number(digit)) && digit !== " ";
+  
+  if (!isNumber) {
+    return <span className="inline-block">{digit}</span>;
+  }
+
+  const num = Number(digit);
+
+  return (
+    <span className="inline-flex h-[1.15em] overflow-hidden relative" style={{ width: "0.58em" }}>
+      <span 
+        className="flex flex-col transition-transform duration-[800ms] ease-[cubic-bezier(0.34,1.56,0.64,1)] absolute left-0 w-full"
+        style={{ 
+          transform: `translateY(-${num * 10}%)`,
+          height: "1000%"
+        }}
+      >
+        {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
+          <span key={n} className="h-[10%] flex items-center justify-center">
+            {n}
+          </span>
+        ))}
+      </span>
+      {/* Spacer to maintain natural text line height */}
+      <span className="opacity-0">0</span>
+    </span>
+  );
+}
+
 function AnimatedNumber({ value }: { value: number }) {
-  const [displayValue, setDisplayValue] = useState(value);
+  const str = useMemo(() => value.toLocaleString(), [value]);
+  const digits = useMemo(() => str.split(""), [str]);
 
-  useEffect(() => {
-    let start = displayValue;
-    const end = value;
-    if (start === end) return;
-
-    const duration = 800; // ms
-    const startTime = performance.now();
-
-    function animate(now: number) {
-      const elapsed = now - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-      const ease = 1 - Math.pow(1 - progress, 3); // Ease-out cubic
-      const current = Math.floor(start + (end - start) * ease);
-      setDisplayValue(current);
-
-      if (progress < 1) {
-        requestAnimationFrame(animate);
-      }
-    }
-
-    requestAnimationFrame(animate);
-  }, [value]);
-
-  return <span>{displayValue.toLocaleString()}</span>;
+  return (
+    <span className="inline-flex items-center select-none font-bold">
+      {digits.map((digit, idx) => (
+        <OdometerDigit key={idx} digit={digit} />
+      ))}
+    </span>
+  );
 }
 
 function AnimatedFloat({ value }: { value: number }) {
-  const [displayValue, setDisplayValue] = useState(value);
+  const str = useMemo(() => value.toFixed(1), [value]);
+  const digits = useMemo(() => str.split(""), [str]);
 
-  useEffect(() => {
-    let start = displayValue;
-    const end = value;
-    if (start === end) return;
-
-    const duration = 800; // ms
-    const startTime = performance.now();
-
-    function animate(now: number) {
-      const elapsed = now - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-      const ease = 1 - Math.pow(1 - progress, 3); // Ease-out cubic
-      const current = start + (end - start) * ease;
-      setDisplayValue(Number(current.toFixed(1)));
-
-      if (progress < 1) {
-        requestAnimationFrame(animate);
-      }
-    }
-
-    requestAnimationFrame(animate);
-  }, [value]);
-
-  return <span>{displayValue.toFixed(1)}%</span>;
+  return (
+    <span className="inline-flex items-center select-none font-bold">
+      {digits.map((digit, idx) => (
+        <OdometerDigit key={idx} digit={digit} />
+      ))}
+      <span className="ml-[1px]">%</span>
+    </span>
+  );
 }
 
 interface AnalyticsClientProps {
@@ -261,7 +270,7 @@ export default function AnalyticsClient({
     filteredDimension
       .filter(d => d.dimension_type === "referrer" && d.event_type === "page_view")
       .forEach(d => {
-        let name = d.dimension_value || "Tráfico Directo";
+        let name = safeDecode(d.dimension_value) || "Tráfico Directo";
         if (name.includes("instagram")) name = "Instagram";
         else if (name.includes("facebook")) name = "Facebook";
         else if (name.includes("twitter") || name.includes("t.co")) name = "Twitter / X";
@@ -292,7 +301,8 @@ export default function AnalyticsClient({
     filteredDimension
       .filter(d => d.dimension_type === "country" && d.event_type === "page_view")
       .forEach(d => {
-        counts[d.dimension_value] = (counts[d.dimension_value] || 0) + (d.count || 0);
+        const decoded = safeDecode(d.dimension_value);
+        counts[decoded] = (counts[decoded] || 0) + (d.count || 0);
       });
     return Object.entries(counts)
       .map(([name, value]) => ({ name, value }))
@@ -306,7 +316,8 @@ export default function AnalyticsClient({
     filteredDimension
       .filter(d => d.dimension_type === "city" && d.event_type === "page_view")
       .forEach(d => {
-        counts[d.dimension_value] = (counts[d.dimension_value] || 0) + (d.count || 0);
+        const decoded = safeDecode(d.dimension_value);
+        counts[decoded] = (counts[decoded] || 0) + (d.count || 0);
       });
     return Object.entries(counts)
       .map(([name, value]) => ({ name, value }))

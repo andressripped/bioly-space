@@ -28,8 +28,23 @@ export async function POST(request: Request) {
     const referrer = body.referrer || null;
 
     // Get country from Vercel's geo headers (works in production)
-    const country = request.headers.get("x-vercel-ip-country") || null;
-    const city = request.headers.get("x-vercel-ip-city") || null;
+    let country = request.headers.get("x-vercel-ip-country") || null;
+    let city = request.headers.get("x-vercel-ip-city") || null;
+
+    if (city) {
+      try {
+        city = decodeURIComponent(city);
+      } catch (e) {
+        // Fallback to original
+      }
+    }
+    if (country) {
+      try {
+        country = decodeURIComponent(country);
+      } catch (e) {
+        // Fallback to original
+      }
+    }
 
     // Si tenemos la Service Role Key (en Vercel/Producción), la usamos para saltarnos RLS completamente y registrar de forma segura
     let supabase;
