@@ -435,9 +435,6 @@ export default function ProfileClient({ user }: { user: any }) {
         }`}>
           {/* Header */}
           <div className="flex items-center gap-4 px-8 pt-8 pb-6 border-b border-[#eeeeee] dark:border-[#222]">
-            <Link href="/dashboard" className="p-2 hover:bg-gray-100 dark:hover:bg-[#111] rounded-full transition-colors">
-              <PiArrowLeft className="w-5 h-5" />
-            </Link>
             <div className="flex-1">
               <h1 className="text-lg font-bold tracking-tight">Editar Perfil</h1>
             </div>

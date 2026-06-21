@@ -15,30 +15,11 @@ export default async function SettingsPage() {
     .single();
 
   return (
-    <div className="flex min-h-screen bg-white dark:bg-[#050505] text-[#111111] dark:text-[#f4f4f5]">
-      {/* Sidebar */}
-      <aside className="w-64 border-r border-[#eeeeee] dark:border-[#222] min-h-screen p-6 hidden md:block">
-        <div className="text-2xl font-extrabold tracking-tighter mb-10">bioly.</div>
-        <nav className="space-y-2">
-          <Link href="/dashboard" className="flex items-center gap-3 px-4 py-3 text-[#555555] dark:text-[#a1a1aa] hover:bg-gray-50 dark:hover:bg-[#111] rounded-xl transition-colors cursor-pointer">
-            <PiList className="w-5 h-5" />
-            Links
-          </Link>
-          <Link href="/dashboard/profile" className="flex items-center gap-3 px-4 py-3 text-[#555555] dark:text-[#a1a1aa] hover:bg-gray-50 dark:hover:bg-[#111] rounded-xl transition-colors cursor-pointer">
-            <PiUser className="w-5 h-5" />
-            Perfil
-          </Link>
-          <Link href="/dashboard/settings" className="flex items-center gap-3 px-4 py-3 bg-[#f9fafb] dark:bg-[#111] rounded-xl font-semibold text-[#111111] dark:text-white border border-[#eeeeee] dark:border-[#333] cursor-pointer">
-            <PiGear className="w-5 h-5" />
-            Ajustes
-          </Link>
-        </nav>
-      </aside>
-
+    <div className="w-full h-full overflow-y-auto bg-white dark:bg-[#050505] text-[#111111] dark:text-[#f4f4f5]">
       {/* Main Content */}
-      <main className="flex-1 p-6 md:p-12 max-w-3xl">
+      <main className="p-6 md:p-12 max-w-3xl mx-auto">
         <div className="flex items-center gap-4 mb-10">
-          <Link href="/dashboard" className="p-2 hover:bg-gray-100 dark:hover:bg-[#111] rounded-full transition-colors md:hidden cursor-pointer">
+          <Link href="/dashboard/profile" className="p-2 hover:bg-gray-100 dark:hover:bg-[#111] rounded-full transition-colors md:hidden cursor-pointer">
             <PiArrowLeft className="w-5 h-5" />
           </Link>
           <div>

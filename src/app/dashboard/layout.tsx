@@ -1,5 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
+import DashboardLayoutClient from "./DashboardLayoutClient";
 
 export default async function DashboardLayout({
   children,
@@ -15,5 +16,15 @@ export default async function DashboardLayout({
     redirect("/login");
   }
 
-  return <>{children}</>;
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("username, plan")
+    .eq("id", user.id)
+    .single();
+
+  return (
+    <DashboardLayoutClient user={user} profile={profile}>
+      {children}
+    </DashboardLayoutClient>
+  );
 }
