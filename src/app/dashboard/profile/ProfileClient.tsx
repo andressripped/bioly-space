@@ -2,10 +2,10 @@
 
 import { useState, useEffect, useRef } from "react";
 import {
-  Monitor, Tablet, Smartphone, Camera, Save, ArrowLeft,
-  Loader2, Copy, Check, ExternalLink, Eye, Pencil, Palette,
-  List, Plus, GripVertical, Trash2, Shield
-} from "lucide-react";
+  PiDesktop, PiDeviceTablet, PiDeviceMobile, PiCamera, PiFloppyDisk, PiArrowLeft,
+  PiSpinner, PiCopy, PiCheck, PiArrowSquareOut, PiEye, PiPencil, PiPalette,
+  PiList, PiPlus, PiDotsSixVertical, PiTrash, PiShieldCheck, PiLock
+} from "react-icons/pi";
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
 import { PlatformIcon } from "@/components/PlatformIcon";
@@ -62,9 +62,11 @@ const BUTTON_STYLES = [
 function SortableLinkItem({
   link,
   onDelete,
+  onEdit,
 }: {
   link: any;
   onDelete: (id: string) => void;
+  onEdit: (link: any) => void;
 }) {
   const {
     attributes,
@@ -101,7 +103,7 @@ function SortableLinkItem({
         className="p-1 text-[#cccccc] dark:text-[#444] hover:text-[#111111] dark:hover:text-white transition-colors cursor-grab active:cursor-grabbing flex-shrink-0 touch-none"
         aria-label="Arrastrar para ordenar"
       >
-        <GripVertical className="w-4 h-4" />
+        <PiDotsSixVertical className="w-4 h-4" />
       </button>
 
       {/* Icon */}
@@ -118,7 +120,7 @@ function SortableLinkItem({
           )}
           {isSensitive && (
             <span className="bg-emerald-100 text-emerald-800 text-[8px] font-bold px-1.5 py-0.5 rounded-full dark:bg-emerald-900/30 dark:text-emerald-400 flex items-center gap-0.5">
-              🔒 Enmascarado
+              <PiShieldCheck className="w-2.5 h-2.5" /> Enmascarado
             </span>
           )}
         </div>
@@ -127,19 +129,26 @@ function SortableLinkItem({
 
       {/* Actions */}
       <div className="flex items-center gap-0.5 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+        <button
+          onClick={() => onEdit(link)}
+          title="Editar Enlace"
+          className="p-1 text-[#555555] dark:text-[#a1a1aa] hover:text-[#111111] dark:hover:text-white transition-colors"
+        >
+          <PiPencil className="w-3.5 h-3.5" />
+        </button>
         <a
           href={link.url}
           target="_blank"
           rel="noopener noreferrer"
           className="p-1 text-[#555555] dark:text-[#a1a1aa] hover:text-[#111111] dark:hover:text-white transition-colors"
         >
-          <ExternalLink className="w-3.5 h-3.5" />
+          <PiArrowSquareOut className="w-3.5 h-3.5" />
         </a>
         <button
           onClick={() => onDelete(link.id)}
           className="p-1 text-[#555555] dark:text-[#a1a1aa] hover:text-red-500 transition-colors"
         >
-          <Trash2 className="w-3.5 h-3.5" />
+          <PiTrash className="w-3.5 h-3.5" />
         </button>
       </div>
     </div>
@@ -159,6 +168,7 @@ export default function ProfileClient({ user }: { user: any }) {
   const [copied, setCopied]             = useState(false);
   const [isAddLinkModalOpen, setIsAddLinkModalOpen] = useState(false);
   const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const [activeEditLink, setActiveEditLink] = useState<any | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -389,7 +399,7 @@ export default function ProfileClient({ user }: { user: any }) {
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center bg-white dark:bg-[#050505]">
-        <Loader2 className="w-8 h-8 animate-spin text-[#111111] dark:text-white" />
+        <PiSpinner className="w-8 h-8 animate-spin text-[#111111] dark:text-white" />
       </div>
     );
   }
@@ -405,7 +415,7 @@ export default function ProfileClient({ user }: { user: any }) {
             mobileTab === "edit" ? "text-[#111111] dark:text-white border-t-2 border-[#111111] dark:border-white" : "text-[#999999] border-t-2 border-transparent"
           }`}
         >
-          <Pencil className="w-4 h-4" /> Editar
+          <PiPencil className="w-4 h-4" /> Editar
         </button>
         <button
           onClick={() => setMobileTab("preview")}
@@ -413,7 +423,7 @@ export default function ProfileClient({ user }: { user: any }) {
             mobileTab === "preview" ? "text-[#111111] dark:text-white border-t-2 border-[#111111] dark:border-white" : "text-[#999999] border-t-2 border-transparent"
           }`}
         >
-          <Eye className="w-4 h-4" /> Preview
+          <PiEye className="w-4 h-4" /> Preview
         </button>
       </div>
 
@@ -426,7 +436,7 @@ export default function ProfileClient({ user }: { user: any }) {
           {/* Header */}
           <div className="flex items-center gap-4 px-8 pt-8 pb-6 border-b border-[#eeeeee] dark:border-[#222]">
             <Link href="/dashboard" className="p-2 hover:bg-gray-100 dark:hover:bg-[#111] rounded-full transition-colors">
-              <ArrowLeft className="w-5 h-5" />
+              <PiArrowLeft className="w-5 h-5" />
             </Link>
             <div className="flex-1">
               <h1 className="text-lg font-bold tracking-tight">Editar Perfil</h1>
@@ -438,14 +448,14 @@ export default function ProfileClient({ user }: { user: any }) {
                 title="Auditoría de Seguridad Cerrojo"
                 className="p-2 hover:bg-amber-50 dark:hover:bg-amber-950/20 rounded-lg transition-colors text-amber-500 hover:text-amber-600 mr-1 flex items-center justify-center gap-1 border border-amber-200 dark:border-amber-900/30"
               >
-                <Shield className="w-4 h-4 animate-pulse" />
+                <PiShieldCheck className="w-4 h-4 animate-pulse" />
                 <span className="text-[10px] font-bold uppercase tracking-wide hidden sm:inline">Cerrojo</span>
               </button>
               <button onClick={copyToClipboard} className="p-2 hover:bg-gray-100 dark:hover:bg-[#111] rounded-lg transition-colors text-[#999999] hover:text-[#111111] dark:hover:text-white">
-                {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
+                {copied ? <PiCheck className="w-4 h-4 text-emerald-500" /> : <PiCopy className="w-4 h-4" />}
               </button>
               <a href={`/${username}`} target="_blank" className="p-2 hover:bg-gray-100 dark:hover:bg-[#111] rounded-lg transition-colors text-[#999999] hover:text-[#111111] dark:hover:text-white">
-                <ExternalLink className="w-4 h-4" />
+                <PiArrowSquareOut className="w-4 h-4" />
               </a>
             </div>
           </div>
@@ -458,7 +468,7 @@ export default function ProfileClient({ user }: { user: any }) {
                 activeSection === "identity" ? "border-[#111111] dark:border-white text-[#111111] dark:text-white" : "border-transparent text-[#999999] hover:text-[#555]"
               }`}
             >
-              <Pencil className="w-3.5 h-3.5" /> Identidad
+              <PiPencil className="w-3.5 h-3.5" /> Identidad
             </button>
             <button
               onClick={() => setActiveSection("appearance")}
@@ -466,7 +476,7 @@ export default function ProfileClient({ user }: { user: any }) {
                 activeSection === "appearance" ? "border-[#111111] dark:border-white text-[#111111] dark:text-white" : "border-transparent text-[#999999] hover:text-[#555]"
               }`}
             >
-              <Palette className="w-3.5 h-3.5" /> Apariencia
+              <PiPalette className="w-3.5 h-3.5" /> Apariencia
             </button>
             <button
               onClick={() => setActiveSection("links")}
@@ -474,7 +484,7 @@ export default function ProfileClient({ user }: { user: any }) {
                 activeSection === "links" ? "border-[#111111] dark:border-white text-[#111111] dark:text-white" : "border-transparent text-[#999999] hover:text-[#555]"
               }`}
             >
-              <List className="w-3.5 h-3.5" /> Links
+              <PiList className="w-3.5 h-3.5" /> Links
             </button>
           </div>
 
@@ -498,7 +508,7 @@ export default function ProfileClient({ user }: { user: any }) {
                     }
                   </div>
                   <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Camera className="w-6 h-6 text-white" />
+                    <PiCamera className="w-6 h-6 text-white" />
                   </div>
                   <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleImageUpload} />
                 </div>
@@ -637,7 +647,7 @@ export default function ProfileClient({ user }: { user: any }) {
                       )}
                       {templateId === tpl.id && (
                         <div className="absolute top-1 left-1 w-3.5 h-3.5 bg-[#111111] dark:bg-white rounded-full flex items-center justify-center">
-                          <Check className="w-2 h-2 text-white dark:text-black" />
+                          <PiCheck className="w-2 h-2 text-white dark:text-black" />
                         </div>
                       )}
                     </button>
@@ -726,7 +736,7 @@ export default function ProfileClient({ user }: { user: any }) {
                         <span className="text-sm font-semibold">{style.label}</span>
                         {isSelected && (
                           <div className="absolute top-1.5 right-1.5 w-4 h-4 bg-[#111111] dark:bg-white rounded-full flex items-center justify-center">
-                            <Check className="w-2.5 h-2.5 text-white dark:text-black" />
+                            <PiCheck className="w-2.5 h-2.5 text-white dark:text-black" />
                           </div>
                         )}
                       </button>
@@ -768,7 +778,7 @@ export default function ProfileClient({ user }: { user: any }) {
                       )}
                       {fontFamily === font.id && (
                         <div className="absolute top-1.5 left-1.5 w-3.5 h-3.5 bg-[#111111] dark:bg-white rounded-full flex items-center justify-center">
-                          <Check className="w-2.5 h-2.5 text-white dark:text-black" />
+                          <PiCheck className="w-2.5 h-2.5 text-white dark:text-black" />
                         </div>
                       )}
                     </button>
@@ -790,9 +800,9 @@ export default function ProfileClient({ user }: { user: any }) {
                 </div>
                 <button
                   onClick={() => setIsAddLinkModalOpen(true)}
-                  className="flex items-center gap-1.5 bg-[#111111] dark:bg-white text-white dark:text-black px-4 py-2.5 rounded-xl font-semibold hover:opacity-90 transition-all shadow-sm active:scale-[0.98] text-xs"
+                  className="flex items-center gap-1.5 bg-[#111111] dark:bg-white text-white dark:text-black px-4 py-2.5 rounded-xl font-semibold hover:opacity-90 transition-all shadow-sm active:scale-[0.98] text-xs font-bold"
                 >
-                  <Plus className="w-3.5 h-3.5" />
+                  <PiPlus className="w-3.5 h-3.5" />
                   <span>Añadir enlace</span>
                 </button>
               </div>
@@ -806,7 +816,7 @@ export default function ProfileClient({ user }: { user: any }) {
                   <SortableContext items={links.map((l) => l.id)} strategy={verticalListSortingStrategy}>
                     <div className="grid gap-3">
                       {links.map((link) => (
-                        <SortableLinkItem key={link.id} link={link} onDelete={handleDeleteLink} />
+                        <SortableLinkItem key={link.id} link={link} onDelete={handleDeleteLink} onEdit={setActiveEditLink} />
                       ))}
                     </div>
                   </SortableContext>
@@ -835,7 +845,7 @@ export default function ProfileClient({ user }: { user: any }) {
                 disabled={saving}
                 className="w-full bg-[#111111] dark:bg-white text-white dark:text-black py-4 rounded-xl font-bold flex items-center justify-center gap-2 shadow-xl shadow-black/10 hover:opacity-90 transition-opacity disabled:opacity-50"
               >
-                {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : success ? <Check className="w-5 h-5" /> : <Save className="w-5 h-5" />}
+                {saving ? <PiSpinner className="w-5 h-5 animate-spin" /> : success ? <PiCheck className="w-5 h-5" /> : <PiFloppyDisk className="w-5 h-5" />}
                 {saving ? "Guardando..." : success ? "¡Guardado!" : "Guardar Cambios"}
               </button>
             </div>
@@ -853,11 +863,11 @@ export default function ProfileClient({ user }: { user: any }) {
               <button
                 key={device}
                 onClick={() => setActiveDevice(device)}
-                className={`p-2 rounded-full transition-all ${activeDevice === device ? "bg-[#111111] text-white dark:bg-white dark:text-black shadow-md" : "text-[#999999] hover:text-[#111]"}`}
+                className="p-2 rounded-full transition-all cursor-pointer"
               >
-                {device === "desktop" && <Monitor className="w-4 h-4" />}
-                {device === "tablet"  && <Tablet   className="w-4 h-4" />}
-                {device === "mobile"  && <Smartphone className="w-4 h-4" />}
+                {device === "desktop" && <PiDesktop className="w-4 h-4" />}
+                {device === "tablet"  && <PiDeviceTablet   className="w-4 h-4" />}
+                {device === "mobile"  && <PiDeviceMobile className="w-4 h-4" />}
               </button>
             ))}
           </div>
@@ -968,7 +978,7 @@ export default function ProfileClient({ user }: { user: any }) {
                                 </div>
                                 <span className="font-bold text-white text-[10px] line-clamp-2 leading-tight flex items-center justify-center gap-0.5">
                                   {link.title}
-                                  {isSensitive && <span className="text-[8px]">🔒</span>}
+                                  {isSensitive && <PiLock className="w-3 h-3 text-white/75" />}
                                 </span>
                               </div>
                             </>
@@ -980,7 +990,7 @@ export default function ProfileClient({ user }: { user: any }) {
                               />
                               <span className={`text-xs font-bold truncate flex-1 text-left flex items-center gap-1 ${isOutline ? "" : "text-white dark:text-black"}`}>
                                 {link.title}
-                                {isSensitive && <span className="opacity-60 text-[9px]">🔒</span>}
+                                {isSensitive && <PiLock className={`w-3.5 h-3.5 inline-block ${isOutline ? "" : "text-white/60 dark:text-black/60"}`} />}
                               </span>
                             </>
                           )}
@@ -1015,9 +1025,13 @@ export default function ProfileClient({ user }: { user: any }) {
       />
 
       <AddLinkModal
-        isOpen={isAddLinkModalOpen}
-        onClose={() => setIsAddLinkModalOpen(false)}
+        isOpen={isAddLinkModalOpen || !!activeEditLink}
+        onClose={() => {
+          setIsAddLinkModalOpen(false);
+          setActiveEditLink(null);
+        }}
         onSuccess={fetchLinks}
+        editLink={activeEditLink}
       />
 
       <SecurityScannerModal

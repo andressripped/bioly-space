@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import Link from "next/link";
-import { ArrowRight, LogOut } from "lucide-react";
+import { PiArrowRight, PiSignOut } from "react-icons/pi";
 
 export default function SignoutPage() {
   const [countdown, setCountdown] = useState(5);
@@ -35,7 +35,7 @@ export default function SignoutPage() {
     <div className="min-h-screen bg-white dark:bg-[#050505] text-[#111111] dark:text-[#f4f4f5] flex flex-col items-center justify-center p-6 transition-colors duration-300">
       <div className="max-w-md w-full text-center">
         <div className="w-20 h-20 bg-[#f9fafb] dark:bg-[#111] rounded-3xl flex items-center justify-center mx-auto mb-8 border border-[#eeeeee] dark:border-[#222] shadow-sm">
-          <LogOut className="w-10 h-10 text-[#999999]" />
+          <PiSignOut className="w-10 h-10 text-[#999999]" />
         </div>
         
         <h1 className="text-4xl font-serif mb-4 tracking-tight">Esperamos verte pronto.</h1>
@@ -51,10 +51,10 @@ export default function SignoutPage() {
 
         <Link 
           href="/" 
-          className="inline-flex items-center gap-2 bg-[#111111] dark:bg-white text-white dark:text-black px-8 py-4 rounded-xl font-semibold hover:opacity-90 transition-all group"
+          className="inline-flex items-center gap-2 bg-[#111111] dark:bg-white text-white dark:text-black px-8 py-4 rounded-xl font-semibold hover:opacity-90 transition-all group cursor-pointer"
         >
           Ir al inicio ahora
-          <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+          <PiArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
         </Link>
       </div>
 

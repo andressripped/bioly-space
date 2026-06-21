@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { PiArrowLeft } from "react-icons/pi";
 import { LoginForm } from "./LoginForm";
 
 export default function LoginPage() {
@@ -7,8 +7,8 @@ export default function LoginPage() {
     <div className="min-h-screen bg-white dark:bg-[#050505] text-[#111111] dark:text-[#f4f4f5] font-sans flex flex-col items-center justify-center p-6 transition-colors duration-300">
       
       <div className="w-full max-w-md">
-        <Link href="/" className="inline-flex items-center gap-2 text-[#555555] dark:text-[#a1a1aa] hover:text-[#111111] dark:hover:text-white transition-colors mb-8 text-sm font-medium">
-          <ArrowLeft className="w-4 h-4" />
+        <Link href="/" className="inline-flex items-center gap-2 text-[#555555] dark:text-[#a1a1aa] hover:text-[#111111] dark:hover:text-white transition-colors mb-8 text-sm font-medium cursor-pointer">
+          <PiArrowLeft className="w-4 h-4" />
           Volver al inicio
         </Link>
         

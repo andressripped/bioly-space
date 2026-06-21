@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { PlatformIcon } from "@/components/PlatformIcon";
-import { Share2, Mail, Check, Loader2, EyeOff } from "lucide-react";
+import { PiShareNetwork, PiEnvelope, PiCheck, PiSpinner, PiEyeSlash } from "react-icons/pi";
 import { FONT_CLASSES } from "@/lib/fonts";
 import { renderWithAppleEmojis } from "@/utils/emoji";
 
@@ -158,7 +158,7 @@ export default function ProfileView({ profile, links }: ProfileViewProps) {
             title="Compartir"
             className="absolute bottom-2 right-2 p-3 bg-white dark:bg-[#111] rounded-full shadow-xl border border-[#eeeeee] dark:border-[#222] hover:scale-110 active:scale-95 transition-all"
           >
-            <Share2 className="w-5 h-5 text-[#111111] dark:text-white" />
+            <PiShareNetwork className="w-5 h-5 text-[#111111] dark:text-white" />
           </button>
         </div>
 
@@ -294,7 +294,7 @@ export default function ProfileView({ profile, links }: ProfileViewProps) {
         <div className="w-full mt-10 p-6 bg-white dark:bg-[#111] rounded-3xl border border-[#eeeeee] dark:border-[#222] shadow-sm">
           <div className="flex items-center gap-3 mb-4">
             <div className="p-2 bg-gray-100 dark:bg-black rounded-lg">
-              <Mail className="w-5 h-5 text-[#111111] dark:text-white" />
+              <PiEnvelope className="w-5 h-5 text-[#111111] dark:text-white" />
             </div>
             <div>
               <h3 className="font-bold text-sm">Suscríbete</h3>
@@ -319,12 +319,12 @@ export default function ProfileView({ profile, links }: ProfileViewProps) {
                   : "bg-[#111111] dark:bg-white text-white dark:text-black hover:opacity-90"
               }`}
             >
-              {subscribing ? <Loader2 className="w-4 h-4 animate-spin" /> : "Suscribirme"}
+              {subscribing ? <PiSpinner className="w-4 h-4 animate-spin" /> : "Suscribirme"}
             </button>
           </form>
           {subscribeMessage.text && (
             <p className={`mt-3 text-xs font-medium flex items-center gap-1 ${subscribeMessage.isError ? "text-red-500" : "text-emerald-500"}`}>
-              {!subscribeMessage.isError && <Check className="w-3 h-3" />}
+              {!subscribeMessage.isError && <PiCheck className="w-3 h-3" />}
               {subscribeMessage.text}
             </p>
           )}
@@ -348,7 +348,7 @@ export default function ProfileView({ profile, links }: ProfileViewProps) {
           <div className="flex flex-col items-center text-center max-w-sm space-y-6">
             
             <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center border border-white/20 shadow-lg backdrop-blur-md">
-              <EyeOff className="w-7 h-7 text-white" />
+              <PiEyeSlash className="w-7 h-7 text-white" />
             </div>
 
             <div className="space-y-2">

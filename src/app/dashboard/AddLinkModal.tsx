@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { 
-  X, Link as LinkIcon, Type, Globe, Search, PlusCircle, Loader2, ImagePlus
-} from "lucide-react";
+  PiX, PiLink, PiTextAa, PiGlobe, PiMagnifyingGlass, PiPlus, PiSpinner, PiImageSquare
+} from "react-icons/pi";
 import { 
   SiInstagram, SiYoutube, SiTiktok, SiX, SiFacebook, 
   SiSpotify, SiTwitch, SiDiscord, SiWhatsapp, 
@@ -36,16 +36,17 @@ const PLATFORMS: Platform[] = [
   { id: "github", name: "GitHub", icon: SiGithub, prefix: "github.com/", color: "#181717", placeholder: "tu_usuario" },
   { id: "pinterest", name: "Pinterest", icon: SiPinterest, prefix: "pinterest.com/", color: "#BD081C", placeholder: "tu_usuario" },
   { id: "snapchat", name: "Snapchat", icon: SiSnapchat, prefix: "snapchat.com/add/", color: "#FFFC00", placeholder: "tu_usuario" },
-  { id: "custom", name: "Personalizado", icon: LinkIcon, prefix: "", color: "#666666", placeholder: "https://tu-link.com" },
+  { id: "custom", name: "Personalizado", icon: PiLink, prefix: "", color: "#666666", placeholder: "https://tu-link.com" },
 ];
 
 interface AddLinkModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  editLink?: any;
 }
 
-export function AddLinkModal({ isOpen, onClose, onSuccess }: AddLinkModalProps) {
+export function AddLinkModal({ isOpen, onClose, onSuccess, editLink }: AddLinkModalProps) {
   const [selectedPlatform, setSelectedPlatform] = useState<Platform>(PLATFORMS[0]);
   const [title, setTitle] = useState("");
   const [handle, setHandle] = useState("");
@@ -58,6 +59,35 @@ export function AddLinkModal({ isOpen, onClose, onSuccess }: AddLinkModalProps) 
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const supabase = createClient();
+
+  useEffect(() => {
+    if (isOpen) {
+      if (editLink) {
+        setTitle(editLink.title || "");
+        setIsSocial(editLink.is_social || false);
+        setThumbnailUrl(editLink.thumbnail_url || "");
+        
+        const platform = PLATFORMS.find(p => p.id === editLink.icon) || PLATFORMS[0];
+        setSelectedPlatform(platform);
+
+        if (platform.id === "custom") {
+          setHandle(editLink.url || "");
+        } else {
+          let url = editLink.url || "";
+          url = url.replace(/^https?:\/\//i, "");
+          url = url.replace(new RegExp(`^${platform.prefix}`, "i"), "");
+          setHandle(url);
+        }
+      } else {
+        setSelectedPlatform(PLATFORMS[0]);
+        setTitle("");
+        setHandle("");
+        setIsSocial(false);
+        setThumbnailUrl("");
+      }
+      setError(null);
+    }
+  }, [isOpen, editLink]);
 
   const filteredPlatforms = useMemo(() => {
     return PLATFORMS.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -107,32 +137,46 @@ export function AddLinkModal({ isOpen, onClose, onSuccess }: AddLinkModalProps) 
 
       const finalTitle = title.trim() || selectedPlatform.name;
 
-      // Calculate the next position value
-      const { data: maxPosData } = await supabase
-        .from("links")
-        .select("position")
-        .eq("user_id", user.id)
-        .order("position", { ascending: false })
-        .limit(1)
-        .single();
-      const nextPosition = (maxPosData?.position ?? -1) + 1;
-
-      const { error: insertError } = await supabase
-        .from("links")
-        .insert([
-          {
-            user_id: user.id,
+      if (editLink) {
+        const { error: updateError } = await supabase
+          .from("links")
+          .update({
             title: finalTitle,
             url: finalUrl,
             icon: selectedPlatform.id,
-            is_active: true,
-            position: nextPosition,
             is_social: isSocial,
             thumbnail_url: thumbnailUrl || null,
-          }
-        ]);
+          })
+          .eq("id", editLink.id);
 
-      if (insertError) throw insertError;
+        if (updateError) throw updateError;
+      } else {
+        const { data: maxPosData } = await supabase
+          .from("links")
+          .select("position")
+          .eq("user_id", user.id)
+          .order("position", { ascending: false })
+          .limit(1)
+          .single();
+        const nextPosition = (maxPosData?.position ?? -1) + 1;
+
+        const { error: insertError } = await supabase
+          .from("links")
+          .insert([
+            {
+              user_id: user.id,
+              title: finalTitle,
+              url: finalUrl,
+              icon: selectedPlatform.id,
+              is_active: true,
+              position: nextPosition,
+              is_social: isSocial,
+              thumbnail_url: thumbnailUrl || null,
+            }
+          ]);
+
+        if (insertError) throw insertError;
+      }
 
       setTitle("");
       setHandle("");
@@ -152,19 +196,18 @@ export function AddLinkModal({ isOpen, onClose, onSuccess }: AddLinkModalProps) 
       <div className="relative w-full max-w-2xl bg-white dark:bg-[#0a0a0a] border border-[#eeeeee] dark:border-[#222] rounded-[3rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in fade-in zoom-in duration-300">
         <div className="p-8 border-b border-[#eeeeee] dark:border-[#222] flex justify-between items-center bg-white dark:bg-[#0a0a0a] z-10">
           <div>
-            <h2 className="text-2xl font-serif text-[#111111] dark:text-white">Añadir enlace</h2>
+            <h2 className="text-2xl font-serif text-[#111111] dark:text-white">{editLink ? "Editar enlace" : "Añadir enlace"}</h2>
             <p className="text-sm text-[#999999]">Selecciona una plataforma para empezar</p>
           </div>
-          <button onClick={onClose} className="p-3 hover:bg-gray-100 dark:hover:bg-[#111] rounded-full transition-colors">
-            <X className="w-5 h-5 text-[#999999]" />
+          <button onClick={onClose} className="p-3 hover:bg-gray-100 dark:hover:bg-[#111] rounded-full transition-colors cursor-pointer">
+            <PiX className="w-5 h-5 text-[#999999]" />
           </button>
         </div>
 
         <div className="flex-1 overflow-y-auto p-8 space-y-8">
-          {/* Selector de Plataforma */}
           <div className="space-y-4">
             <div className="relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#999999]" />
+              <PiMagnifyingGlass className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#999999]" />
               <input 
                 type="text" 
                 placeholder="Buscar plataforma..." 
@@ -182,7 +225,7 @@ export function AddLinkModal({ isOpen, onClose, onSuccess }: AddLinkModalProps) 
                     setSelectedPlatform(p);
                     setTitle("");
                   }}
-                  className={`flex flex-col items-center justify-center p-4 rounded-3xl border transition-all gap-2 group ${
+                  className={`flex flex-col items-center justify-center p-4 rounded-3xl border transition-all gap-2 group cursor-pointer ${
                     selectedPlatform.id === p.id 
                       ? "bg-[#111111] border-[#111111] text-white dark:bg-white dark:border-white dark:text-black scale-[1.02] shadow-lg shadow-black/10 dark:shadow-white/5" 
                       : "bg-[#f9fafb] dark:bg-[#111] border-[#eeeeee] dark:border-[#222] hover:border-[#111111] dark:hover:border-white"
@@ -202,7 +245,7 @@ export function AddLinkModal({ isOpen, onClose, onSuccess }: AddLinkModalProps) 
               <div>
                 <label className="block text-xs font-bold uppercase tracking-widest text-[#999999] mb-2 ml-1">Título (Opcional)</label>
                 <div className="relative">
-                  <Type className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#999999]" />
+                  <PiTextAa className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#999999]" />
                   <input
                     type="text"
                     value={title}
@@ -219,7 +262,7 @@ export function AddLinkModal({ isOpen, onClose, onSuccess }: AddLinkModalProps) 
                 </label>
                 <div className="relative">
                   {selectedPlatform.id === "custom" ? (
-                    <Globe className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#999999]" />
+                    <PiLink className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#999999]" />
                   ) : (
                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xs font-bold text-[#999999] dark:text-[#666]">
                       {selectedPlatform.id === "whatsapp" ? "wa.me/" : "@"}
@@ -273,10 +316,10 @@ export function AddLinkModal({ isOpen, onClose, onSuccess }: AddLinkModalProps) 
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
                       disabled={isUploading}
-                      className="h-[54px] px-6 bg-gray-100 dark:bg-[#222] hover:bg-gray-200 dark:hover:bg-[#333] border border-[#eeeeee] dark:border-[#333] rounded-2xl flex items-center justify-center transition-colors disabled:opacity-50"
+                      className="h-[54px] px-6 bg-gray-100 dark:bg-[#222] hover:bg-gray-200 dark:hover:bg-[#333] border border-[#eeeeee] dark:border-[#333] rounded-2xl flex items-center justify-center transition-colors disabled:opacity-50 cursor-pointer"
                       title="Subir imagen"
                     >
-                      {isUploading ? <Loader2 className="w-5 h-5 text-[#111111] dark:text-white animate-spin" /> : <ImagePlus className="w-5 h-5 text-[#111111] dark:text-white" />}
+                      {isUploading ? <PiSpinner className="w-5 h-5 text-[#111111] dark:text-white animate-spin" /> : <PiImageSquare className="w-5 h-5 text-[#111111] dark:text-white" />}
                     </button>
                     <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleImageUpload} />
                   </div>
@@ -287,10 +330,10 @@ export function AddLinkModal({ isOpen, onClose, onSuccess }: AddLinkModalProps) 
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-[#111111] dark:bg-white text-white dark:text-black px-8 py-5 rounded-3xl font-bold hover:opacity-90 disabled:opacity-50 transition-all shadow-xl shadow-black/10 dark:shadow-white/5 flex items-center justify-center gap-3 text-lg"
+                className="w-full bg-[#111111] dark:bg-white text-white dark:text-black px-8 py-5 rounded-3xl font-bold hover:opacity-90 disabled:opacity-50 transition-all shadow-xl shadow-black/10 dark:shadow-white/5 flex items-center justify-center gap-3 text-lg cursor-pointer"
               >
-                {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <PlusCircle className="w-6 h-6" />}
-                {loading ? "Guardando..." : "Confirmar y Añadir"}
+                {loading ? <PiSpinner className="w-6 h-6 animate-spin" /> : <PiPlus className="w-6 h-6" />}
+                {loading ? "Guardando..." : editLink ? "Guardar Cambios" : "Confirmar y Añadir"}
               </button>
             </div>
           </form>

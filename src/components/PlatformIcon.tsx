@@ -4,7 +4,7 @@ import {
   SiTelegram, SiGithub, SiPinterest, SiSnapchat
 } from "react-icons/si";
 import { FaLinkedin } from "react-icons/fa";
-import { Link as LinkIcon } from "lucide-react";
+import { PiLink } from "react-icons/pi";
 
 export function getPlatformIcon(platformId: string) {
   switch (platformId) {
@@ -22,7 +22,7 @@ export function getPlatformIcon(platformId: string) {
     case "github": return SiGithub;
     case "pinterest": return SiPinterest;
     case "snapchat": return SiSnapchat;
-    default: return LinkIcon;
+    default: return PiLink;
   }
 }
 

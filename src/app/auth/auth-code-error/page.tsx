@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft, RefreshCw } from "lucide-react";
+import { PiArrowLeft, PiArrowsClockwise } from "react-icons/pi";
 
 export default function AuthCodeErrorPage() {
   return (
@@ -22,16 +22,16 @@ export default function AuthCodeErrorPage() {
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Link
             href="/login"
-            className="inline-flex items-center justify-center gap-2 bg-[#111111] dark:bg-white text-white dark:text-black px-8 py-4 rounded-xl font-semibold hover:opacity-90 transition-all group"
+            className="inline-flex items-center justify-center gap-2 bg-[#111111] dark:bg-white text-white dark:text-black px-8 py-4 rounded-xl font-semibold hover:opacity-90 transition-all group cursor-pointer"
           >
-            <RefreshCw className="w-4 h-4" />
+            <PiArrowsClockwise className="w-4 h-4" />
             Intentar de nuevo
           </Link>
           <Link
             href="/"
-            className="inline-flex items-center justify-center gap-2 border border-[#eeeeee] dark:border-[#222] px-8 py-4 rounded-xl font-semibold text-[#555555] dark:text-[#a1a1aa] hover:border-[#111111] dark:hover:border-white hover:text-[#111111] dark:hover:text-white transition-all"
+            className="inline-flex items-center justify-center gap-2 border border-[#eeeeee] dark:border-[#222] px-8 py-4 rounded-xl font-semibold text-[#555555] dark:text-[#a1a1aa] hover:border-[#111111] dark:hover:border-white hover:text-[#111111] dark:hover:text-white transition-all cursor-pointer"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <PiArrowLeft className="w-4 h-4" />
             Volver al inicio
           </Link>
         </div>

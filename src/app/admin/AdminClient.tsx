@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Search, Crown, Check, Loader2, Calendar } from "lucide-react";
+import { PiMagnifyingGlass, PiSpinner } from "react-icons/pi";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 
@@ -24,7 +24,6 @@ export default function AdminClient({ profiles }: { profiles: any[] }) {
     
     setLoadingId(profileId);
     
-    // Calcular fecha de expiración
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + days);
 
@@ -65,7 +64,7 @@ export default function AdminClient({ profiles }: { profiles: any[] }) {
     <div className="bg-white dark:bg-[#111] p-6 rounded-3xl border border-[#eeeeee] dark:border-[#222] shadow-sm">
       <div className="flex items-center gap-4 mb-8">
         <div className="relative flex-1">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#999]" />
+          <PiMagnifyingGlass className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#999]" />
           <input
             type="text"
             placeholder="Buscar por email, username o nombre..."
@@ -112,25 +111,25 @@ export default function AdminClient({ profiles }: { profiles: any[] }) {
                   </td>
                   <td className="px-4 py-4 text-right space-x-2">
                     {loadingId === p.id ? (
-                      <Loader2 className="w-5 h-5 animate-spin inline-block text-emerald-500" />
+                      <PiSpinner className="w-5 h-5 animate-spin inline-block text-emerald-500" />
                     ) : (
                       <>
                         <button 
                           onClick={() => handleGrantPlan(p.id, "pro", 30)}
-                          className="px-3 py-1.5 bg-[#111] dark:bg-white text-white dark:text-black rounded-lg text-xs font-bold hover:opacity-80 transition-opacity"
+                          className="px-3 py-1.5 bg-[#111] dark:bg-white text-white dark:text-black rounded-lg text-xs font-bold hover:opacity-80 transition-opacity cursor-pointer"
                         >
                           +30 Días PRO
                         </button>
                         <button 
                           onClick={() => handleGrantPlan(p.id, "business", 365)}
-                          className="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-bold hover:bg-emerald-700 transition-colors"
+                          className="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-bold hover:bg-emerald-700 transition-colors cursor-pointer"
                         >
                           +1 Año BIZ
                         </button>
                         {isPremium && (
                           <button 
                             onClick={() => handleRevokePlan(p.id)}
-                            className="px-3 py-1.5 bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 rounded-lg text-xs font-bold hover:bg-red-200 transition-colors"
+                            className="px-3 py-1.5 bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 rounded-lg text-xs font-bold hover:bg-red-200 transition-colors cursor-pointer"
                           >
                             Revocar
                           </button>

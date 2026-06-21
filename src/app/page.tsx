@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Globe, ArrowRight, Moon, Sun } from "lucide-react";
+import { PiArrowRight, PiTShirt, PiHeadphones } from "react-icons/pi";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { InstagramIcon, TiktokIcon, YoutubeIcon } from "@/components/icons";
@@ -82,7 +82,6 @@ export default function Home() {
     else setLang("EN");
   }, []);
 
-  // Use ES as default for SSR — avoids white flash and empty SEO
   const t = translations[mounted ? lang : "ES"];
 
   return (
@@ -127,10 +126,10 @@ export default function Home() {
               </div>
               <Link 
                 href={`/login?username=${claimUsername}`} 
-                className="bg-[#111111] dark:bg-white text-white dark:text-black px-8 py-4 rounded-xl font-medium hover:bg-black dark:hover:bg-gray-200 transition-colors flex items-center justify-center gap-2 group"
+                className="bg-[#111111] dark:bg-white text-white dark:text-black px-8 py-4 rounded-xl font-medium hover:bg-black dark:hover:bg-gray-200 transition-colors flex items-center justify-center gap-2 group cursor-pointer"
               >
                 {t.claim}
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                <PiArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </Link>
             </div>
             
@@ -205,7 +204,7 @@ export default function Home() {
                     <div className="space-y-3">
                       <div className="w-full bg-[#f9fafb] dark:bg-[#111] border border-[#eeeeee] dark:border-[#222] rounded-[1rem] p-4 flex items-center gap-4 hover:shadow-md transition-shadow cursor-pointer text-left">
                         <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-                          <span className="text-xl">👕</span>
+                          <PiTShirt className="w-5 h-5" />
                         </div>
                         <div>
                           <h3 className="font-semibold text-[#111111] dark:text-white">{t.mock_card1_title}</h3>
@@ -215,7 +214,7 @@ export default function Home() {
 
                       <div className="w-full bg-[#f9fafb] dark:bg-[#111] border border-[#eeeeee] dark:border-[#222] rounded-[1rem] p-4 flex items-center gap-4 hover:shadow-md transition-shadow cursor-pointer text-left">
                         <div className="w-12 h-12 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center text-violet-600 dark:text-violet-400">
-                          <span className="text-xl">🎧</span>
+                          <PiHeadphones className="w-5 h-5" />
                         </div>
                         <div>
                           <h3 className="font-semibold text-[#111111] dark:text-white">{t.mock_card2_title}</h3>

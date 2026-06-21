@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
-import { ArrowRight, Check, Loader2, Camera } from "lucide-react";
+import { PiArrowRight, PiCheck, PiSpinner, PiCamera } from "react-icons/pi";
 import {
   SiInstagram, SiYoutube, SiTiktok, SiX, SiFacebook,
   SiSpotify, SiTwitch, SiDiscord, SiWhatsapp,
@@ -167,7 +167,6 @@ export default function OnboardingPage() {
   };
 
   const canProceedStep1 = username.length >= 3 && usernameStatus === "available" && displayName.trim().length > 0;
-  const canProceedStep2 = true; // links are optional
 
   const THEME_COLORS = ["#111111", "#6366f1", "#10b981", "#f59e0b", "#ef4444", "#ec4899", "#8b5cf6", "#0ea5e9"];
 
@@ -183,9 +182,9 @@ export default function OnboardingPage() {
             <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold transition-all ${
               s < step ? "bg-[#111111] dark:bg-white text-white dark:text-black" :
               s === step ? "bg-[#111111] dark:bg-white text-white dark:text-black ring-4 ring-[#111111]/20 dark:ring-white/20" :
-              "bg-[#f0f0f0] dark:bg-[#222] text-[#999]"
+              "bg-[#f0f0f0] dark:bg-[#222] text-[#99]"
             }`}>
-              {s < step ? <Check className="w-4 h-4" /> : s}
+              {s < step ? <PiCheck className="w-4 h-4" /> : s}
             </div>
             {s < 3 && <div className={`w-16 h-0.5 transition-all ${s < step ? "bg-[#111111] dark:bg-white" : "bg-[#eeeeee] dark:bg-[#333]"}`} />}
           </div>
@@ -212,7 +211,7 @@ export default function OnboardingPage() {
                   )}
                 </div>
                 <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Camera className="w-6 h-6 text-white" />
+                  <PiCamera className="w-6 h-6 text-white" />
                 </div>
                 <input type="file" className="hidden" accept="image/*" onChange={handleAvatarChange} />
               </label>
@@ -249,8 +248,8 @@ export default function OnboardingPage() {
                     }`}
                   />
                   <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                    {usernameStatus === "checking" && <Loader2 className="w-4 h-4 animate-spin text-[#999]" />}
-                    {usernameStatus === "available" && <Check className="w-4 h-4 text-emerald-500" />}
+                    {usernameStatus === "checking" && <PiSpinner className="w-4 h-4 animate-spin text-[#999]" />}
+                    {usernameStatus === "available" && <PiCheck className="w-4 h-4 text-emerald-500" />}
                     {(usernameStatus === "taken" || usernameStatus === "reserved") && (
                       <svg className="w-4 h-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -267,9 +266,9 @@ export default function OnboardingPage() {
             <button
               onClick={() => setStep(2)}
               disabled={!canProceedStep1}
-              className="w-full mt-8 bg-[#111111] dark:bg-white text-white dark:text-black py-4 rounded-2xl font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-30 disabled:cursor-not-allowed"
+              className="w-full mt-8 bg-[#111111] dark:bg-white text-white dark:text-black py-4 rounded-2xl font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
             >
-              Siguiente <ArrowRight className="w-5 h-5" />
+              Siguiente <PiArrowRight className="w-5 h-5" />
             </button>
           </div>
         )}
@@ -286,7 +285,7 @@ export default function OnboardingPage() {
                 <button
                   key={p.id}
                   onClick={() => { setSelectedPlatform(p); setHandle(""); }}
-                  className={`flex flex-col items-center gap-1.5 p-3 rounded-2xl border transition-all ${
+                  className={`flex flex-col items-center gap-1.5 p-3 rounded-2xl border transition-all cursor-pointer ${
                     selectedPlatform.id === p.id
                       ? "bg-[#111111] border-[#111111] text-white dark:bg-white dark:border-white dark:text-black"
                       : "bg-white dark:bg-[#111] border-[#eeeeee] dark:border-[#222] text-[#555] hover:border-[#111] dark:hover:border-white"
@@ -301,7 +300,7 @@ export default function OnboardingPage() {
             {/* Handle input */}
             <div className="flex gap-3 mb-4">
               <div className="flex-1 relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xs font-bold text-[#999]">@</span>
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xs font-bold text-[#99]">@</span>
                 <input
                   type="text"
                   value={handle}
@@ -314,7 +313,7 @@ export default function OnboardingPage() {
               <button
                 onClick={addLink}
                 disabled={!handle.trim()}
-                className="bg-[#111111] dark:bg-white text-white dark:text-black px-5 rounded-2xl font-bold text-sm hover:opacity-90 transition-opacity disabled:opacity-30"
+                className="bg-[#111111] dark:bg-white text-white dark:text-black px-5 rounded-2xl font-bold text-sm hover:opacity-90 transition-opacity disabled:opacity-30 cursor-pointer"
               >
                 Añadir
               </button>
@@ -327,7 +326,7 @@ export default function OnboardingPage() {
                   <div key={i} className="flex items-center gap-3 bg-white dark:bg-[#111] border border-[#eeeeee] dark:border-[#222] rounded-2xl p-3">
                     <l.platform.icon className="w-5 h-5 flex-shrink-0" style={{ color: l.platform.color }} />
                     <span className="flex-1 text-sm font-medium truncate">{l.url}</span>
-                    <button onClick={() => removeLink(i)} className="text-[#999] hover:text-red-500 transition-colors p-1">
+                    <button onClick={() => removeLink(i)} className="text-[#99] hover:text-red-500 transition-colors p-1 cursor-pointer">
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                     </button>
                   </div>
@@ -336,11 +335,11 @@ export default function OnboardingPage() {
             )}
 
             <div className="flex gap-3 mt-6">
-              <button onClick={() => setStep(1)} className="flex-1 border border-[#eeeeee] dark:border-[#333] py-4 rounded-2xl font-semibold text-[#555] hover:border-[#111] dark:hover:border-white transition-colors">
+              <button onClick={() => setStep(1)} className="flex-1 border border-[#eeeeee] dark:border-[#333] py-4 rounded-2xl font-semibold text-[#555] hover:border-[#111] dark:hover:border-white transition-colors cursor-pointer">
                 Atrás
               </button>
-              <button onClick={() => setStep(3)} className="flex-[2] bg-[#111111] dark:bg-white text-white dark:text-black py-4 rounded-2xl font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity">
-                {addedLinks.length === 0 ? "Saltar por ahora" : "Siguiente"} <ArrowRight className="w-5 h-5" />
+              <button onClick={() => setStep(3)} className="flex-[2] bg-[#111111] dark:bg-white text-white dark:text-black py-4 rounded-2xl font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity cursor-pointer">
+                {addedLinks.length === 0 ? "Saltar por ahora" : "Siguiente"} <PiArrowRight className="w-5 h-5" />
               </button>
             </div>
           </div>
@@ -382,13 +381,13 @@ export default function OnboardingPage() {
 
             {/* Color picker */}
             <div>
-              <label className="block text-xs font-bold uppercase tracking-widest text-[#999] mb-3">Color del tema</label>
+              <label className="block text-xs font-bold uppercase tracking-widest text-[#99] mb-3">Color del tema</label>
               <div className="flex items-center gap-3 flex-wrap">
                 {THEME_COLORS.map((c) => (
                   <button
                     key={c}
                     onClick={() => setThemeColor(c)}
-                    className={`w-9 h-9 rounded-full transition-all ${themeColor === c ? "ring-2 ring-offset-2 ring-[#111] dark:ring-white scale-110" : "opacity-70 hover:opacity-100 hover:scale-105"}`}
+                    className={`w-9 h-9 rounded-full transition-all cursor-pointer ${themeColor === c ? "ring-2 ring-offset-2 ring-[#111] dark:ring-white scale-110" : "opacity-70 hover:opacity-100 hover:scale-105"}`}
                     style={{ backgroundColor: c }}
                   />
                 ))}
@@ -403,15 +402,15 @@ export default function OnboardingPage() {
             </div>
 
             <div className="flex gap-3 mt-8">
-              <button onClick={() => setStep(2)} className="flex-1 border border-[#eeeeee] dark:border-[#333] py-4 rounded-2xl font-semibold text-[#555] hover:border-[#111] dark:hover:border-white transition-colors">
+              <button onClick={() => setStep(2)} className="flex-1 border border-[#eeeeee] dark:border-[#333] py-4 rounded-2xl font-semibold text-[#555] hover:border-[#111] dark:hover:white transition-colors cursor-pointer">
                 Atrás
               </button>
               <button
                 onClick={handleFinish}
                 disabled={loading}
-                className="flex-[2] bg-[#111111] dark:bg-white text-white dark:text-black py-4 rounded-2xl font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-50"
+                className="flex-[2] bg-[#111111] dark:bg-white text-white dark:text-black py-4 rounded-2xl font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-50 cursor-pointer"
               >
-                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Check className="w-5 h-5" />}
+                {loading ? <PiSpinner className="w-5 h-5 animate-spin" /> : <PiCheck className="w-5 h-5" />}
                 {loading ? "Publicando..." : "¡Publicar mi Bioly!"}
               </button>
             </div>

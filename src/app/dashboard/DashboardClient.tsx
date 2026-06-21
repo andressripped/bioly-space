@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 import {
-  LayoutDashboard, User, Settings, LogOut, Plus, ExternalLink, Trash2, Menu, X, GripVertical, BarChart2, Crown
-} from "lucide-react";
+  PiSquaresFour, PiUser, PiGear, PiSignOut, PiPlus, PiArrowSquareOut, PiTrash, PiList, PiX, PiDotsSixVertical, PiChartBar, PiCrown
+} from "react-icons/pi";
 import Link from "next/link";
 import {
   DndContext,
@@ -65,7 +65,7 @@ function SortableLinkItem({
         className="p-1.5 text-[#cccccc] dark:text-[#444] hover:text-[#111111] dark:hover:text-white transition-colors cursor-grab active:cursor-grabbing flex-shrink-0 touch-none"
         aria-label="Arrastrar para ordenar"
       >
-        <GripVertical className="w-5 h-5" />
+        <PiDotsSixVertical className="w-5 h-5" />
       </button>
 
       {/* Icon */}
@@ -93,15 +93,15 @@ function SortableLinkItem({
           href={link.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="p-2 text-[#555555] dark:text-[#a1a1aa] hover:text-[#111111] dark:hover:text-white transition-colors"
+          className="p-2 text-[#555555] dark:text-[#a1a1aa] hover:text-[#111111] dark:hover:text-white transition-colors cursor-pointer"
         >
-          <ExternalLink className="w-4 h-4" />
+          <PiArrowSquareOut className="w-4 h-4" />
         </a>
         <button
           onClick={() => onDelete(link.id)}
-          className="p-2 text-[#555555] dark:text-[#a1a1aa] hover:text-red-500 transition-colors"
+          className="p-2 text-[#555555] dark:text-[#a1a1aa] hover:text-red-500 transition-colors cursor-pointer"
         >
-          <Trash2 className="w-4 h-4" />
+          <PiTrash className="w-4 h-4" />
         </button>
       </div>
     </div>
@@ -118,7 +118,7 @@ export default function DashboardClient({ initialUser }: { initialUser: any }) {
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
-      activationConstraint: { distance: 8 }, // Require 8px movement to start drag
+      activationConstraint: { distance: 8 },
     }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
@@ -154,10 +154,8 @@ export default function DashboardClient({ initialUser }: { initialUser: any }) {
     const newIndex = links.findIndex((l) => l.id === over.id);
     const reordered = arrayMove(links, oldIndex, newIndex);
 
-    // Optimistic update
     setLinks(reordered);
 
-    // Persist all positions to Supabase
     const updates = reordered.map((link, index) =>
       supabase.from("links").update({ position: index }).eq("id", link.id)
     );
@@ -165,14 +163,14 @@ export default function DashboardClient({ initialUser }: { initialUser: any }) {
   };
 
   const navItems = [
-    { href: "/dashboard", icon: LayoutDashboard, label: "Links", active: true },
-    { href: "/dashboard/analytics", icon: BarChart2, label: "Analíticas", active: false },
-    { href: "/dashboard/profile", icon: User, label: "Perfil y Apariencia", active: false },
-    { href: "/dashboard/settings", icon: Settings, label: "Ajustes", active: false },
+    { href: "/dashboard", icon: PiSquaresFour, label: "Links", active: true },
+    { href: "/dashboard/analytics", icon: PiChartBar, label: "Analíticas", active: false },
+    { href: "/dashboard/profile", icon: PiUser, label: "Perfil y Apariencia", active: false },
+    { href: "/dashboard/settings", icon: PiGear, label: "Ajustes", active: false },
   ];
 
   if (initialUser.email === "andreslit6@gmail.com") {
-    navItems.push({ href: "/admin", icon: Crown, label: "👑 Admin", active: false });
+    navItems.push({ href: "/admin", icon: PiCrown, label: "Admin", active: false });
   }
 
   return (
@@ -186,7 +184,7 @@ export default function DashboardClient({ initialUser }: { initialUser: any }) {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors font-medium ${
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors font-medium cursor-pointer ${
                 item.active
                   ? "bg-[#f9fafb] dark:bg-[#111] text-[#111111] dark:text-white border border-[#eeeeee] dark:border-[#333] font-semibold"
                   : "text-[#555555] dark:text-[#a1a1aa] hover:bg-gray-50 dark:hover:bg-[#111]"
@@ -199,9 +197,9 @@ export default function DashboardClient({ initialUser }: { initialUser: any }) {
         </nav>
         <Link
           href="/auth/signout"
-          className="flex items-center gap-3 px-4 py-3 text-[#555555] dark:text-[#a1a1aa] hover:text-red-500 transition-colors rounded-xl text-sm font-medium"
+          className="flex items-center gap-3 px-4 py-3 text-[#555555] dark:text-[#a1a1aa] hover:text-red-500 transition-colors rounded-xl text-sm font-medium cursor-pointer"
         >
-          <LogOut className="w-4 h-4" />
+          <PiSignOut className="w-4 h-4" />
           Cerrar sesión
         </Link>
       </aside>
@@ -213,8 +211,8 @@ export default function DashboardClient({ initialUser }: { initialUser: any }) {
           <nav className="absolute left-0 top-0 bottom-0 w-72 bg-white dark:bg-[#0a0a0a] border-r border-[#eeeeee] dark:border-[#222] p-6 flex flex-col shadow-2xl">
             <div className="flex items-center justify-between mb-10">
               <div className="text-2xl font-extrabold tracking-tighter">bioly.</div>
-              <button onClick={() => setIsMobileNavOpen(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-[#111] rounded-full transition-colors">
-                <X className="w-5 h-5" />
+              <button onClick={() => setIsMobileNavOpen(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-[#111] rounded-full transition-colors cursor-pointer">
+                <PiX className="w-5 h-5" />
               </button>
             </div>
             <div className="space-y-2 flex-1">
@@ -223,7 +221,7 @@ export default function DashboardClient({ initialUser }: { initialUser: any }) {
                   key={item.href}
                   href={item.href}
                   onClick={() => setIsMobileNavOpen(false)}
-                  className={`flex items-center gap-3 px-4 py-4 rounded-xl transition-colors font-medium text-base ${
+                  className={`flex items-center gap-3 px-4 py-4 rounded-xl transition-colors font-medium text-base cursor-pointer ${
                     item.active
                       ? "bg-[#f9fafb] dark:bg-[#111] text-[#111111] dark:text-white border border-[#eeeeee] dark:border-[#333] font-semibold"
                       : "text-[#555555] dark:text-[#a1a1aa] hover:bg-gray-50 dark:hover:bg-[#111]"
@@ -234,8 +232,8 @@ export default function DashboardClient({ initialUser }: { initialUser: any }) {
                 </Link>
               ))}
             </div>
-            <Link href="/auth/signout" className="flex items-center gap-3 px-4 py-3 text-[#555555] dark:text-[#a1a1aa] hover:text-red-500 transition-colors rounded-xl text-sm font-medium">
-              <LogOut className="w-4 h-4" />
+            <Link href="/auth/signout" className="flex items-center gap-3 px-4 py-3 text-[#555555] dark:text-[#a1a1aa] hover:text-red-500 transition-colors rounded-xl text-sm font-medium cursor-pointer">
+              <PiSignOut className="w-4 h-4" />
               Cerrar sesión
             </Link>
           </nav>
@@ -247,8 +245,8 @@ export default function DashboardClient({ initialUser }: { initialUser: any }) {
 
         {/* Mobile top bar */}
         <div className="flex items-center gap-4 mb-8 md:hidden">
-          <button onClick={() => setIsMobileNavOpen(true)} className="p-2.5 border border-[#eeeeee] dark:border-[#222] rounded-xl hover:bg-gray-50 dark:hover:bg-[#111] transition-colors">
-            <Menu className="w-5 h-5" />
+          <button onClick={() => setIsMobileNavOpen(true)} className="p-2.5 border border-[#eeeeee] dark:border-[#222] rounded-xl hover:bg-gray-50 dark:hover:bg-[#111] transition-colors cursor-pointer">
+            <PiList className="w-5 h-5" />
           </button>
           <span className="text-xl font-extrabold tracking-tighter">bioly.</span>
         </div>
@@ -263,8 +261,8 @@ export default function DashboardClient({ initialUser }: { initialUser: any }) {
               Aquí es donde empieza la magia de tu universo digital.
             </p>
           </div>
-          <Link href="/auth/signout" className="p-3 border border-[#eeeeee] dark:border-[#222] rounded-full hover:bg-gray-100 dark:hover:bg-[#111] transition-colors">
-            <LogOut className="w-5 h-5" />
+          <Link href="/auth/signout" className="p-3 border border-[#eeeeee] dark:border-[#222] rounded-full hover:bg-gray-100 dark:hover:bg-[#111] transition-colors cursor-pointer">
+            <PiSignOut className="w-5 h-5" />
           </Link>
         </header>
 
@@ -278,9 +276,9 @@ export default function DashboardClient({ initialUser }: { initialUser: any }) {
           </div>
           <button
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 bg-[#111111] dark:bg-white text-white dark:text-black px-4 md:px-6 py-2.5 md:py-3 rounded-xl font-semibold hover:opacity-90 transition-all shadow-md active:scale-[0.98] text-sm md:text-base"
+            className="flex items-center gap-2 bg-[#111111] dark:bg-white text-white dark:text-black px-4 md:px-6 py-2.5 md:py-3 rounded-xl font-semibold hover:opacity-90 transition-all shadow-md active:scale-[0.98] text-sm md:text-base cursor-pointer"
           >
-            <Plus className="w-4 h-4 md:w-5 md:h-5" />
+            <PiPlus className="w-4 h-4 md:w-5 md:h-5" />
             <span className="hidden sm:inline">Añadir enlace</span>
             <span className="sm:hidden">Añadir</span>
           </button>
@@ -310,7 +308,7 @@ export default function DashboardClient({ initialUser }: { initialUser: any }) {
         ) : (
           <div className="p-10 md:p-16 border-2 border-dashed border-[#eeeeee] dark:border-[#222] rounded-3xl flex flex-col items-center justify-center text-center">
             <div className="w-16 h-16 bg-[#f9fafb] dark:bg-[#111] rounded-2xl flex items-center justify-center mb-6 border border-[#eeeeee] dark:border-[#333]">
-              <LayoutDashboard className="w-8 h-8 text-[#999999]" />
+              <PiSquaresFour className="w-8 h-8 text-[#999999]" />
             </div>
             <h2 className="text-2xl font-serif mb-3">Aún no tienes enlaces</h2>
             <p className="text-[#555555] dark:text-[#a1a1aa] mb-8 max-w-sm text-sm md:text-base">
@@ -318,7 +316,7 @@ export default function DashboardClient({ initialUser }: { initialUser: any }) {
             </p>
             <button
               onClick={() => setIsModalOpen(true)}
-              className="bg-[#111111] dark:bg-white text-white dark:text-black px-8 py-4 rounded-xl font-semibold hover:opacity-90 transition-opacity"
+              className="bg-[#111111] dark:bg-white text-white dark:text-black px-8 py-4 rounded-xl font-semibold hover:opacity-90 transition-opacity cursor-pointer"
             >
               + Añadir nuevo enlace
             </button>

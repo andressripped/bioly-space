@@ -1,11 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { Check } from "lucide-react";
+import { PiCheck, PiSpinner } from "react-icons/pi";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { useState, useEffect } from "react";
-import { Loader2 } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 
 export const LEMONSQUEEZY_PRO_VARIANT_ID = process.env.NEXT_PUBLIC_LEMONSQUEEZY_PRO_VARIANT_ID || "variant_pro_placeholder";
@@ -101,14 +100,13 @@ export default function PricingPage() {
       });
 
       if (response.status === 401) {
-        // Redirigir al login si no está autenticado
         window.location.href = `/login?redirect=/pricing`;
         return;
       }
 
       const { url } = await response.json();
       if (url) {
-        window.location.href = url; // Redirige a Lemon Squeezy
+        window.location.href = url;
       }
     } catch (error) {
       console.error("Error al iniciar checkout", error);
@@ -133,7 +131,7 @@ export default function PricingPage() {
             Escala tu negocio con Bioly. Empieza gratis, actualiza cuando estés listo.
           </p>
           <div className="isolate mx-auto mt-16 grid max-w-md grid-cols-1 gap-y-8 sm:mt-20 lg:mx-0 lg:max-w-none lg:grid-cols-3 lg:gap-x-8 lg:gap-y-0">
-            {tiers.map((tier, tierIdx) => (
+            {tiers.map((tier) => (
               <div
                 key={tier.id}
                 className={`rounded-3xl p-8 ring-1 xl:p-10 ${
@@ -172,14 +170,14 @@ export default function PricingPage() {
                   onClick={() => handleSubscribe(tier)}
                   disabled={loadingTier === tier.id}
                   aria-describedby={tier.id}
-                  className={`mt-6 w-full flex items-center justify-center rounded-xl py-3 px-3 text-center text-sm font-bold leading-6 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 transition-all ${
+                  className={`mt-6 w-full flex items-center justify-center rounded-xl py-3 px-3 text-center text-sm font-bold leading-6 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 transition-all cursor-pointer ${
                     tier.mostPopular
                       ? "bg-emerald-500 text-white shadow-sm hover:bg-emerald-600 focus-visible:outline-emerald-500"
                       : "bg-[#111] dark:bg-white text-white dark:text-black hover:opacity-90 ring-1 ring-inset ring-[#111] dark:ring-white"
                   } disabled:opacity-50`}
                 >
                   {loadingTier === tier.id ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <PiSpinner className="w-5 h-5 animate-spin" />
                   ) : isLoggedIn === false && tier.name !== "Free" ? (
                     "Inicia sesión para comprar"
                   ) : (
@@ -194,7 +192,7 @@ export default function PricingPage() {
                 >
                   {tier.features.map((feature) => (
                     <li key={feature} className="flex gap-x-3">
-                      <Check
+                      <PiCheck
                         className={`h-6 w-5 flex-none ${tier.mostPopular ? "text-emerald-500" : "text-emerald-600"}`}
                         aria-hidden="true"
                       />

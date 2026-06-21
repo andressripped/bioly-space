@@ -1,13 +1,13 @@
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { PiArrowLeft } from "react-icons/pi";
 import { SignupForm } from "./SignupForm";
 
 export default function SignupPage() {
   return (
     <div className="min-h-screen bg-white dark:bg-[#050505] text-[#111111] dark:text-[#f4f4f5] font-sans flex flex-col items-center justify-center p-6 transition-colors duration-300">
       <div className="w-full max-w-md">
-        <Link href="/" className="inline-flex items-center gap-2 text-[#555555] dark:text-[#a1a1aa] hover:text-[#111111] dark:hover:text-white transition-colors mb-8 text-sm font-medium">
-          <ArrowLeft className="w-4 h-4" />
+        <Link href="/" className="inline-flex items-center gap-2 text-[#555555] dark:text-[#a1a1aa] hover:text-[#111111] dark:hover:text-white transition-colors mb-8 text-sm font-medium cursor-pointer">
+          <PiArrowLeft className="w-4 h-4" />
           Volver al inicio
         </Link>
 
@@ -22,7 +22,7 @@ export default function SignupPage() {
 
           <p className="mt-8 text-center text-xs text-[#999999]">
             ¿Ya tienes cuenta?{" "}
-            <Link href="/login" className="font-semibold text-[#111111] dark:text-white hover:underline">
+            <Link href="/login" className="font-semibold text-[#111111] dark:text-white hover:underline cursor-pointer">
               Inicia sesión
             </Link>
           </p>

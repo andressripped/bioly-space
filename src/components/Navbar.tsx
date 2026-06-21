@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Globe, Moon, Sun } from "lucide-react";
+import { PiGlobe, PiMoon, PiSun } from "react-icons/pi";
 import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
 
@@ -29,7 +29,7 @@ export function Navbar({ lang, setLang, t }: NavbarProps) {
         <div className="flex items-center gap-4 sm:gap-6">
           {setLang && (
             <div className="hidden md:flex items-center gap-2 text-sm font-medium text-[#555555] dark:text-[#a1a1aa]">
-              <Globe className="w-4 h-4" />
+              <PiGlobe className="w-4 h-4" />
               <select 
                 value={lang} 
                 onChange={(e) => setLang(e.target.value)}
@@ -48,13 +48,13 @@ export function Navbar({ lang, setLang, t }: NavbarProps) {
           
           <button 
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-[#111] transition-colors"
+            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-[#111] transition-colors cursor-pointer"
             aria-label="Toggle Dark Mode"
           >
-            {mounted && (theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />)}
+            {mounted && (theme === 'dark' ? <PiSun className="w-4 h-4" /> : <PiMoon className="w-4 h-4" />)}
           </button>
 
-          <Link href="/login" className="text-sm font-semibold bg-[#111111] dark:bg-white text-white dark:text-black px-6 py-3 rounded-xl hover:bg-black dark:hover:bg-gray-200 transition-all shadow-sm active:scale-[0.98]">
+          <Link href="/login" className="text-sm font-semibold bg-[#111111] dark:bg-white text-white dark:text-black px-6 py-3 rounded-xl hover:bg-black dark:hover:bg-gray-200 transition-all shadow-sm active:scale-[0.98] cursor-pointer">
             {t?.nav_login || (lang === 'ES' ? 'Entrar' : 'Sign in')}
           </Link>
         </div>

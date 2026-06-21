@@ -18,11 +18,19 @@ import {
   Cell,
   LabelList,
 } from "recharts";
-import { Eye, MousePointerClick, TrendingUp, Users, Mail, Lock, Calendar, Globe, ExternalLink } from "lucide-react";
+import { 
+  PiEye, 
+  PiCursorClick, 
+  PiChartLineUp, 
+  PiUsers, 
+  PiEnvelope, 
+  PiLock, 
+  PiGlobe, 
+  PiArrowSquareOut 
+} from "react-icons/pi";
 
 const COLORS = ['#111111', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'];
 
-// Helper to safely decode percent-encoded URL values (handling raw strings gracefully)
 function safeDecode(val: string): string {
   if (!val) return "";
   try {
@@ -32,7 +40,6 @@ function safeDecode(val: string): string {
   }
 }
 
-// Ultra-premium vertical digit slider Odometer (hardware-accelerated)
 function OdometerDigit({ digit }: { digit: string }) {
   const isNumber = !isNaN(Number(digit)) && digit !== " ";
   
@@ -57,7 +64,6 @@ function OdometerDigit({ digit }: { digit: string }) {
           </span>
         ))}
       </span>
-      {/* Spacer to maintain natural text line height */}
       <span className="opacity-0">0</span>
     </span>
   );
@@ -114,7 +120,6 @@ export default function AnalyticsClient({
   const [activeTab, setActiveTab] = useState<"general" | "advanced">("general");
   const [realtimeStatus, setRealtimeStatus] = useState<string>("CONNECTING");
 
-  // Local state to support real-time WebSocket updates
   const [localDaily, setLocalDaily] = useState(dailyData);
   const [localDimension, setLocalDimension] = useState(dimensionData);
   const [localShares, setLocalShares] = useState(sharesData);
@@ -125,11 +130,9 @@ export default function AnalyticsClient({
     setLocalShares(sharesData);
   }, [dailyData, dimensionData, sharesData]);
 
-  // Supabase Realtime Subscription
   useEffect(() => {
     const supabase = createClient();
     
-    // Subscribe to new tracking rows added for this profile
     const channel = supabase
       .channel(`realtime-analytics-${profileId}`)
       .on(
@@ -140,9 +143,7 @@ export default function AnalyticsClient({
           table: "analytics",
         },
         async () => {
-          // Wait 500ms to ensure the database trigger has fully committed the aggregations
           setTimeout(async () => {
-            // Fetch updated pre-aggregated summary tables in parallel to bypass PostgREST 1000 row limits
             const [
               { data: daily },
               { data: shares },
@@ -188,12 +189,11 @@ export default function AnalyticsClient({
     };
   }, [profileId]);
 
-  // Filtrar datos según el rango de tiempo seleccionado
   const filteredDaily = useMemo(() => {
     if (timeRange === "all") return localDaily;
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - timeRange);
-    const cutoffStr = cutoff.toISOString().split("T")[0]; // YYYY-MM-DD
+    const cutoffStr = cutoff.toISOString().split("T")[0];
     return localDaily.filter(d => d.date >= cutoffStr);
   }, [localDaily, timeRange]);
 
@@ -201,7 +201,7 @@ export default function AnalyticsClient({
     if (timeRange === "all") return localDimension;
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - timeRange);
-    const cutoffStr = cutoff.toISOString().split("T")[0]; // YYYY-MM-DD
+    const cutoffStr = cutoff.toISOString().split("T")[0];
     return localDimension.filter(d => d.date >= cutoffStr);
   }, [localDimension, timeRange]);
 
@@ -212,13 +212,11 @@ export default function AnalyticsClient({
     return localShares.filter(s => new Date(s.created_at) >= cutoff);
   }, [localShares, timeRange]);
 
-  // Recalcular KPIs basados en el filtro
   const pageViews = filteredDaily.reduce((sum, d) => sum + (d.views_count || 0), 0);
   const linkClicks = filteredDaily.reduce((sum, d) => sum + (d.clicks_count || 0), 0);
   const shares = filteredShares.length;
   const ctr = pageViews > 0 ? (linkClicks / pageViews) * 100 : 0;
 
-  // Agrupar por fecha para la gráfica de área
   const chartData = useMemo(() => {
     const dataByDate: Record<string, { date: string; views: number; clicks: number }> = {};
     const days = timeRange === "all" ? 30 : timeRange;
@@ -231,7 +229,7 @@ export default function AnalyticsClient({
     }
 
     filteredDaily.forEach((event) => {
-      const dateStr = event.date; // YYYY-MM-DD
+      const dateStr = event.date;
       if (dataByDate[dateStr]) {
         dataByDate[dateStr].views += event.views_count || 0;
         dataByDate[dateStr].clicks += event.clicks_count || 0;
@@ -244,7 +242,6 @@ export default function AnalyticsClient({
     }));
   }, [filteredDaily, timeRange]);
 
-  // Agrupar clicks por link
   const linkPerformance = useMemo(() => {
     const clicksByLink: Record<string, number> = {};
     
@@ -260,9 +257,6 @@ export default function AnalyticsClient({
     })).sort((a, b) => b.clicks - a.clicks).slice(0, 5);
   }, [filteredDimension, links]);
 
-  // --- DIMENSIONES AVANZADAS ---
-
-  // Agrupar referrers con normalización y cálculo de Tráfico Directo
   const referrerData = useMemo(() => {
     const counts: Record<string, number> = {};
     let totalKnownRef = 0;
@@ -283,7 +277,6 @@ export default function AnalyticsClient({
         totalKnownRef += d.count || 0;
       });
       
-    // Tráfico Directo
     const directTraffic = Math.max(0, pageViews - totalKnownRef);
     if (directTraffic > 0) {
       counts["Tráfico Directo"] = (counts["Tráfico Directo"] || 0) + directTraffic;
@@ -295,7 +288,6 @@ export default function AnalyticsClient({
       .slice(0, 5);
   }, [filteredDimension, pageViews]);
 
-  // Agrupar Países
   const countryData = useMemo(() => {
     const counts: Record<string, number> = {};
     filteredDimension
@@ -310,7 +302,6 @@ export default function AnalyticsClient({
       .slice(0, 5);
   }, [filteredDimension]);
 
-  // Agrupar Ciudades
   const cityData = useMemo(() => {
     const counts: Record<string, number> = {};
     filteredDimension
@@ -325,7 +316,6 @@ export default function AnalyticsClient({
       .slice(0, 5);
   }, [filteredDimension]);
 
-  // Agrupar dispositivos
   const deviceData = useMemo(() => {
     const counts: Record<string, number> = {};
     filteredDimension
@@ -336,7 +326,6 @@ export default function AnalyticsClient({
     return Object.entries(counts).map(([name, value]) => ({ name, value }));
   }, [filteredDimension]);
 
-  // Agrupar navegadores
   const browserData = useMemo(() => {
     const counts: Record<string, number> = {};
     filteredDimension
@@ -347,17 +336,13 @@ export default function AnalyticsClient({
     return Object.entries(counts).map(([name, value]) => ({ name, value }));
   }, [filteredDimension]);
 
-
   return (
     <div className="space-y-8">
-      {/* DIAGNOSTIC BADGE */}
-
-
-      {/* KPI CARDS CON ANIMACIÓN DE ODÓMETRO */}
+      {/* KPI CARDS */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-white dark:bg-[#111] p-6 rounded-3xl border border-[#eeeeee] dark:border-[#222] shadow-sm">
           <div className="flex items-center gap-3 text-[#555555] dark:text-[#a1a1aa] mb-3">
-            <Eye className="w-5 h-5" />
+            <PiEye className="w-5 h-5" />
             <h3 className="text-sm font-semibold">Vistas de perfil</h3>
           </div>
           <p className="text-3xl font-bold">
@@ -367,7 +352,7 @@ export default function AnalyticsClient({
         
         <div className="bg-white dark:bg-[#111] p-6 rounded-3xl border border-[#eeeeee] dark:border-[#222] shadow-sm">
           <div className="flex items-center gap-3 text-[#555555] dark:text-[#a1a1aa] mb-3">
-            <MousePointerClick className="w-5 h-5" />
+            <PiCursorClick className="w-5 h-5" />
             <h3 className="text-sm font-semibold">Clicks totales</h3>
           </div>
           <p className="text-3xl font-bold">
@@ -377,7 +362,7 @@ export default function AnalyticsClient({
 
         <div className="bg-white dark:bg-[#111] p-6 rounded-3xl border border-[#eeeeee] dark:border-[#222] shadow-sm">
           <div className="flex items-center gap-3 text-[#555555] dark:text-[#a1a1aa] mb-3">
-            <TrendingUp className="w-5 h-5" />
+            <PiChartLineUp className="w-5 h-5" />
             <h3 className="text-sm font-semibold">CTR Promedio</h3>
           </div>
           <p className="text-3xl font-bold">
@@ -387,7 +372,7 @@ export default function AnalyticsClient({
 
         <div className="bg-white dark:bg-[#111] p-6 rounded-3xl border border-[#eeeeee] dark:border-[#222] shadow-sm">
           <div className="flex items-center gap-3 text-[#555555] dark:text-[#a1a1aa] mb-3">
-            <Users className="w-5 h-5" />
+            <PiUsers className="w-5 h-5" />
             <h3 className="text-sm font-semibold">Compartidos</h3>
           </div>
           <p className="text-3xl font-bold">
@@ -396,11 +381,11 @@ export default function AnalyticsClient({
         </div>
       </div>
 
-      {/* SEGMENTACIÓN DE VISTAS (TAB SELECTOR) */}
+      {/* TABS */}
       <div className="flex border-b border-[#eeeeee] dark:border-[#222] mt-4">
         <button
           onClick={() => setActiveTab("general")}
-          className={`pb-4 px-6 text-sm font-bold border-b-2 transition-all ${
+          className={`pb-4 px-6 text-sm font-bold border-b-2 transition-all cursor-pointer ${
             activeTab === "general"
               ? "border-black dark:border-white text-black dark:text-white"
               : "border-transparent text-[#999] hover:text-[#555] dark:hover:text-white"
@@ -416,23 +401,23 @@ export default function AnalyticsClient({
             }
             setActiveTab("advanced");
           }}
-          className={`pb-4 px-6 text-sm font-bold border-b-2 transition-all flex items-center gap-2 ${
+          className={`pb-4 px-6 text-sm font-bold border-b-2 transition-all flex items-center gap-2 cursor-pointer ${
             activeTab === "advanced"
               ? "border-black dark:border-white text-black dark:text-white"
               : "border-transparent text-[#999] hover:text-[#555] dark:hover:text-white"
           }`}
         >
-          {plan === "free" && <Lock className="w-3.5 h-3.5 text-emerald-500" />}
+          {plan === "free" && <PiLock className="w-3.5 h-3.5 text-emerald-500" />}
           Vista Avanzada
         </button>
       </div>
 
-      {/* CONTROLES DE TIEMPO (COMÚN PARA AMBAS VISTAS) */}
+      {/* CONTROLES DE TIEMPO */}
       <div className="flex items-center justify-end">
         <div className="bg-gray-100 dark:bg-[#111] p-1 rounded-xl inline-flex">
           <button 
             onClick={() => setTimeRange(7)}
-            className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all ${timeRange === 7 ? "bg-white dark:bg-[#222] shadow-sm text-black dark:text-white" : "text-[#555] hover:text-black dark:hover:text-white"}`}
+            className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all cursor-pointer ${timeRange === 7 ? "bg-white dark:bg-[#222] shadow-sm text-black dark:text-white" : "text-[#555] hover:text-black dark:hover:text-white"}`}
           >
             7 días
           </button>
@@ -444,9 +429,9 @@ export default function AnalyticsClient({
               }
               setTimeRange(30);
             }}
-            className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all flex items-center gap-2 ${timeRange === 30 ? "bg-white dark:bg-[#222] shadow-sm text-black dark:text-white" : "text-[#555] hover:text-black dark:hover:text-white"}`}
+            className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all flex items-center gap-2 cursor-pointer ${timeRange === 30 ? "bg-white dark:bg-[#222] shadow-sm text-black dark:text-white" : "text-[#555] hover:text-black dark:hover:text-white"}`}
           >
-            {plan === "free" && <Lock className="w-3 h-3 text-emerald-500" />}
+            {plan === "free" && <PiLock className="w-3 h-3 text-emerald-500" />}
             30 días
           </button>
           <button 
@@ -457,9 +442,9 @@ export default function AnalyticsClient({
               }
               setTimeRange("all");
             }}
-            className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all flex items-center gap-2 ${timeRange === "all" ? "bg-white dark:bg-[#222] shadow-sm text-black dark:text-white" : "text-[#555] hover:text-black dark:hover:text-white"}`}
+            className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all flex items-center gap-2 cursor-pointer ${timeRange === "all" ? "bg-white dark:bg-[#222] shadow-sm text-black dark:text-white" : "text-[#555] hover:text-black dark:hover:text-white"}`}
           >
-            {plan === "free" && <Lock className="w-3 h-3 text-emerald-500" />}
+            {plan === "free" && <PiLock className="w-3 h-3 text-emerald-500" />}
             Todo
           </button>
         </div>
@@ -468,7 +453,6 @@ export default function AnalyticsClient({
       {/* CONTENIDO DE TABS */}
       {activeTab === "general" ? (
         <div className="space-y-8">
-          {/* GRÁFICA PRINCIPAL */}
           <div className="bg-white dark:bg-[#111] p-6 lg:p-8 rounded-3xl border border-[#eeeeee] dark:border-[#222] shadow-sm">
             <h3 className="text-lg font-bold mb-6">Tráfico de los últimos {timeRange === "all" ? "30" : timeRange} días</h3>
             <div className="h-[300px] w-full">
@@ -497,7 +481,6 @@ export default function AnalyticsClient({
             </div>
           </div>
 
-          {/* LINKS TOP */}
           <div className="bg-white dark:bg-[#111] p-6 lg:p-8 rounded-3xl border border-[#eeeeee] dark:border-[#222] shadow-sm">
             <h3 className="text-lg font-bold mb-6">Top Links (Más clickeados)</h3>
             <div className="h-[250px] w-full">
@@ -525,16 +508,11 @@ export default function AnalyticsClient({
           </div>
         </div>
       ) : (
-        // VISTA AVANZADA (PREMIUM FEATURES)
         <div className="space-y-8">
-          
-          {/* GEOGRAFÍA Y CANALES DE TRÁFICO */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            
-            {/* PAÍSES */}
             <div className="bg-white dark:bg-[#111] p-6 rounded-3xl border border-[#eeeeee] dark:border-[#222] shadow-sm">
               <div className="flex items-center gap-3 text-black dark:text-white mb-6">
-                <Globe className="w-5 h-5 text-blue-500" />
+                <PiGlobe className="w-5 h-5 text-blue-500" />
                 <h3 className="text-base font-bold">Top Países</h3>
               </div>
               <div className="space-y-4">
@@ -556,10 +534,9 @@ export default function AnalyticsClient({
               </div>
             </div>
 
-            {/* CIUDADES */}
             <div className="bg-white dark:bg-[#111] p-6 rounded-3xl border border-[#eeeeee] dark:border-[#222] shadow-sm">
               <div className="flex items-center gap-3 text-black dark:text-white mb-6">
-                <Globe className="w-5 h-5 text-emerald-500" />
+                <PiGlobe className="w-5 h-5 text-emerald-500" />
                 <h3 className="text-base font-bold">Top Ciudades</h3>
               </div>
               <div className="space-y-4">
@@ -581,10 +558,9 @@ export default function AnalyticsClient({
               </div>
             </div>
 
-            {/* REFERRERS */}
             <div className="bg-white dark:bg-[#111] p-6 rounded-3xl border border-[#eeeeee] dark:border-[#222] shadow-sm">
               <div className="flex items-center gap-3 text-black dark:text-white mb-6">
-                <ExternalLink className="w-5 h-5 text-indigo-500" />
+                <PiArrowSquareOut className="w-5 h-5 text-indigo-500" />
                 <h3 className="text-base font-bold">Canales de Tráfico</h3>
               </div>
               <div className="space-y-4">
@@ -605,10 +581,8 @@ export default function AnalyticsClient({
                 )}
               </div>
             </div>
-
           </div>
 
-          {/* TECNOLOGÍA (DISPOSITIVOS Y NAVEGADORES) */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="bg-white dark:bg-[#111] p-6 lg:p-8 rounded-3xl border border-[#eeeeee] dark:border-[#222] shadow-sm">
               <h3 className="text-lg font-bold mb-6">Dispositivos</h3>
@@ -682,16 +656,15 @@ export default function AnalyticsClient({
               </div>
             </div>
           </div>
-
         </div>
       )}
 
-      {/* AUDIENCIA / SUSCRIPTORES (COMÚN PARA AMBAS VISTAS) */}
+      {/* AUDIENCIA / SUSCRIPTORES */}
       <div className="bg-white dark:bg-[#111] p-6 lg:p-8 rounded-3xl border border-[#eeeeee] dark:border-[#222] shadow-sm">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-lg font-bold">Suscriptores ({subscribers.length})</h3>
           <button 
-            className={`text-xs font-bold uppercase tracking-widest transition-colors flex items-center gap-2 ${
+            className={`text-xs font-bold uppercase tracking-widest transition-colors flex items-center gap-2 cursor-pointer ${
               plan === "business" 
                 ? "text-[#555] hover:text-[#111] dark:text-[#a1a1aa] dark:hover:text-white" 
                 : "text-emerald-600 dark:text-emerald-500 hover:opacity-80"
@@ -711,7 +684,7 @@ export default function AnalyticsClient({
               document.body.removeChild(link);
             }}
           >
-            {plan !== "business" && <Lock className="w-3 h-3" />}
+            {plan !== "business" && <PiLock className="w-3 h-3" />}
             Exportar CSV
           </button>
         </div>
@@ -737,7 +710,7 @@ export default function AnalyticsClient({
           </div>
         ) : (
           <div className="p-8 border-2 border-dashed border-[#eeeeee] dark:border-[#222] rounded-2xl text-center text-[#999999]">
-            <Mail className="w-8 h-8 mx-auto mb-3 text-[#cccccc] dark:text-[#444]" />
+            <PiEnvelope className="w-8 h-8 mx-auto mb-3 text-[#cccccc] dark:text-[#444]" />
             Aún no tienes suscriptores. <br/> ¡Asegúrate de compartir tu perfil!
           </div>
         )}

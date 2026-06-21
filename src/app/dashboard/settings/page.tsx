@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Settings, ArrowLeft, CreditCard, Bell, Shield, LogOut } from "lucide-react";
+import { PiGear, PiArrowLeft, PiCreditCard, PiBell, PiShield, PiSignOut, PiList, PiUser } from "react-icons/pi";
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 
@@ -20,16 +20,16 @@ export default async function SettingsPage() {
       <aside className="w-64 border-r border-[#eeeeee] dark:border-[#222] min-h-screen p-6 hidden md:block">
         <div className="text-2xl font-extrabold tracking-tighter mb-10">bioly.</div>
         <nav className="space-y-2">
-          <Link href="/dashboard" className="flex items-center gap-3 px-4 py-3 text-[#555555] dark:text-[#a1a1aa] hover:bg-gray-50 dark:hover:bg-[#111] rounded-xl transition-colors">
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
+          <Link href="/dashboard" className="flex items-center gap-3 px-4 py-3 text-[#555555] dark:text-[#a1a1aa] hover:bg-gray-50 dark:hover:bg-[#111] rounded-xl transition-colors cursor-pointer">
+            <PiList className="w-5 h-5" />
             Links
           </Link>
-          <Link href="/dashboard/profile" className="flex items-center gap-3 px-4 py-3 text-[#555555] dark:text-[#a1a1aa] hover:bg-gray-50 dark:hover:bg-[#111] rounded-xl transition-colors">
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+          <Link href="/dashboard/profile" className="flex items-center gap-3 px-4 py-3 text-[#555555] dark:text-[#a1a1aa] hover:bg-gray-50 dark:hover:bg-[#111] rounded-xl transition-colors cursor-pointer">
+            <PiUser className="w-5 h-5" />
             Perfil
           </Link>
-          <Link href="/dashboard/settings" className="flex items-center gap-3 px-4 py-3 bg-[#f9fafb] dark:bg-[#111] rounded-xl font-semibold text-[#111111] dark:text-white border border-[#eeeeee] dark:border-[#333]">
-            <Settings className="w-5 h-5" />
+          <Link href="/dashboard/settings" className="flex items-center gap-3 px-4 py-3 bg-[#f9fafb] dark:bg-[#111] rounded-xl font-semibold text-[#111111] dark:text-white border border-[#eeeeee] dark:border-[#333] cursor-pointer">
+            <PiGear className="w-5 h-5" />
             Ajustes
           </Link>
         </nav>
@@ -38,8 +38,8 @@ export default async function SettingsPage() {
       {/* Main Content */}
       <main className="flex-1 p-6 md:p-12 max-w-3xl">
         <div className="flex items-center gap-4 mb-10">
-          <Link href="/dashboard" className="p-2 hover:bg-gray-100 dark:hover:bg-[#111] rounded-full transition-colors md:hidden">
-            <ArrowLeft className="w-5 h-5" />
+          <Link href="/dashboard" className="p-2 hover:bg-gray-100 dark:hover:bg-[#111] rounded-full transition-colors md:hidden cursor-pointer">
+            <PiArrowLeft className="w-5 h-5" />
           </Link>
           <div>
             <h1 className="text-4xl font-serif mb-1">Ajustes</h1>
@@ -52,7 +52,7 @@ export default async function SettingsPage() {
           <div className="bg-[#f9fafb] dark:bg-[#0a0a0a] border border-[#eeeeee] dark:border-[#222] rounded-3xl p-8">
             <div className="flex items-center gap-4 mb-6">
               <div className="w-12 h-12 bg-[#111111] dark:bg-white rounded-2xl flex items-center justify-center">
-                <CreditCard className="w-6 h-6 text-white dark:text-black" />
+                <PiCreditCard className="w-6 h-6 text-white dark:text-black" />
               </div>
               <div>
                 <h2 className="text-xl font-bold">Plan actual</h2>
@@ -66,7 +66,7 @@ export default async function SettingsPage() {
                   {profile?.plan === "free" || !profile?.plan ? "Gratis para siempre" : "Activo"}
                 </p>
               </div>
-              <button className="bg-[#111111] dark:bg-white text-white dark:text-black px-5 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity">
+              <button className="bg-[#111111] dark:bg-white text-white dark:text-black px-5 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity cursor-pointer">
                 Mejorar Plan
               </button>
             </div>
@@ -76,7 +76,7 @@ export default async function SettingsPage() {
           <div className="bg-[#f9fafb] dark:bg-[#0a0a0a] border border-[#eeeeee] dark:border-[#222] rounded-3xl p-8">
             <div className="flex items-center gap-4 mb-6">
               <div className="w-12 h-12 bg-[#f0f0f0] dark:bg-[#222] rounded-2xl flex items-center justify-center">
-                <Shield className="w-6 h-6 text-[#555555] dark:text-[#a1a1aa]" />
+                <PiShield className="w-6 h-6 text-[#555555] dark:text-[#a1a1aa]" />
               </div>
               <div>
                 <h2 className="text-xl font-bold">Cuenta</h2>
@@ -95,7 +95,7 @@ export default async function SettingsPage() {
                   <p className="text-xs font-bold uppercase tracking-widest text-[#999999] mb-0.5">Username</p>
                   <p className="font-medium">bioly.space/{profile?.username || "—"}</p>
                 </div>
-                <Link href="/dashboard/profile" className="text-sm font-semibold text-[#555555] hover:text-[#111111] dark:hover:text-white transition-colors">
+                <Link href="/dashboard/profile" className="text-sm font-semibold text-[#555555] hover:text-[#111111] dark:hover:text-white transition-colors cursor-pointer">
                   Cambiar
                 </Link>
               </div>
@@ -106,7 +106,7 @@ export default async function SettingsPage() {
           <div className="bg-[#f9fafb] dark:bg-[#0a0a0a] border border-[#eeeeee] dark:border-[#222] rounded-3xl p-8">
             <div className="flex items-center gap-4 mb-6">
               <div className="w-12 h-12 bg-[#f0f0f0] dark:bg-[#222] rounded-2xl flex items-center justify-center">
-                <Bell className="w-6 h-6 text-[#555555] dark:text-[#a1a1aa]" />
+                <PiBell className="w-6 h-6 text-[#555555] dark:text-[#a1a1aa]" />
               </div>
               <div>
                 <h2 className="text-xl font-bold">Notificaciones</h2>
@@ -122,9 +122,9 @@ export default async function SettingsPage() {
             <p className="text-sm text-[#555555] dark:text-[#a1a1aa] mb-6">Estas acciones son irreversibles. Procede con cuidado.</p>
             <Link
               href="/auth/signout"
-              className="inline-flex items-center gap-2 border border-[#eeeeee] dark:border-[#333] px-5 py-3 rounded-xl text-sm font-semibold text-[#555555] dark:text-[#a1a1aa] hover:border-red-300 hover:text-red-500 transition-all"
+              className="inline-flex items-center gap-2 border border-[#eeeeee] dark:border-[#333] px-5 py-3 rounded-xl text-sm font-semibold text-[#555555] dark:text-[#a1a1aa] hover:border-red-300 hover:text-red-500 transition-all cursor-pointer"
             >
-              <LogOut className="w-4 h-4" />
+              <PiSignOut className="w-4 h-4" />
               Cerrar sesión
             </Link>
           </div>
