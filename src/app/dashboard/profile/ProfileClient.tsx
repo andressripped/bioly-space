@@ -4,15 +4,35 @@ import { useState, useEffect, useRef } from "react";
 import {
   Monitor, Tablet, Smartphone, Camera, Save, ArrowLeft,
   Loader2, Copy, Check, ExternalLink, Eye, Pencil, Palette,
+  List, Plus, GripVertical, Trash2, Shield
 } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
 import { PlatformIcon } from "@/components/PlatformIcon";
 import { QRCodeCanvas } from "qrcode.react";
 import UpgradeModal from "@/components/UpgradeModal";
+import SecurityScannerModal from "@/components/SecurityScannerModal";
+import { AddLinkModal } from "../AddLinkModal";
 import { BIOLY_TEMPLATES, TemplateConfig } from "@/lib/templates";
 import { FONT_OPTIONS, FONT_CLASSES } from "@/lib/fonts";
 import { renderWithAppleEmojis } from "@/utils/emoji";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 type Device = "desktop" | "tablet" | "mobile";
 
@@ -38,16 +58,116 @@ const BUTTON_STYLES = [
   { id: "card",    label: "Tarjeta (Card)" },
 ];
 
+// ─── Sortable Link Item ───────────────────────────────────────────────────────
+function SortableLinkItem({
+  link,
+  onDelete,
+}: {
+  link: any;
+  onDelete: (id: string) => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: link.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  const isSensitive = ["onlyfans.com", "fansly.com", "patreon.com", "justforfans.com"].some(
+    (domain) => link.url?.toLowerCase().includes(domain)
+  );
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`group flex items-center gap-3 bg-white dark:bg-[#0a0a0a] border border-[#eeeeee] dark:border-[#222] p-3.5 rounded-xl transition-all shadow-sm ${
+        isDragging
+          ? "opacity-50 border-[#111111] dark:border-white shadow-2xl scale-[1.02] z-50"
+          : "hover:border-[#d0d0d0] dark:hover:border-[#444]"
+      }`}
+    >
+      {/* Drag Handle */}
+      <button
+        {...attributes}
+        {...listeners}
+        className="p-1 text-[#cccccc] dark:text-[#444] hover:text-[#111111] dark:hover:text-white transition-colors cursor-grab active:cursor-grabbing flex-shrink-0 touch-none"
+        aria-label="Arrastrar para ordenar"
+      >
+        <GripVertical className="w-4 h-4" />
+      </button>
+
+      {/* Icon */}
+      <div className="w-9 h-9 bg-[#f9fafb] dark:bg-[#111] rounded-lg flex items-center justify-center border border-[#eeeeee] dark:border-[#222] flex-shrink-0">
+        <PlatformIcon id={link.icon} className="w-4 h-4 text-[#111111] dark:text-white" />
+      </div>
+
+      {/* Info */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <h3 className="font-semibold text-[#111111] dark:text-white truncate text-xs leading-none">{link.title}</h3>
+          {link.is_social && (
+            <span className="bg-blue-100 text-blue-800 text-[8px] font-bold px-1.5 py-0.5 rounded-full dark:bg-blue-900/30 dark:text-blue-400">Social</span>
+          )}
+          {isSensitive && (
+            <span className="bg-emerald-100 text-emerald-800 text-[8px] font-bold px-1.5 py-0.5 rounded-full dark:bg-emerald-900/30 dark:text-emerald-400 flex items-center gap-0.5">
+              🔒 Enmascarado
+            </span>
+          )}
+        </div>
+        <p className="text-[10px] text-[#999999] truncate mt-0.5">{link.url}</p>
+      </div>
+
+      {/* Actions */}
+      <div className="flex items-center gap-0.5 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+        <a
+          href={link.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="p-1 text-[#555555] dark:text-[#a1a1aa] hover:text-[#111111] dark:hover:text-white transition-colors"
+        >
+          <ExternalLink className="w-3.5 h-3.5" />
+        </a>
+        <button
+          onClick={() => onDelete(link.id)}
+          className="p-1 text-[#555555] dark:text-[#a1a1aa] hover:text-red-500 transition-colors"
+        >
+          <Trash2 className="w-3.5 h-3.5" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function ProfileClient({ user }: { user: any }) {
   const [activeDevice, setActiveDevice] = useState<Device>("mobile");
   const [mobileTab, setMobileTab]       = useState<"edit" | "preview">("edit");
-  const [activeSection, setActiveSection] = useState<"identity" | "appearance">("identity");
+  const [activeSection, setActiveSection] = useState<"identity" | "appearance" | "links">("identity");
   const [loading, setLoading]           = useState(true);
   const [saving, setSaving]             = useState(false);
   const [error, setError]               = useState<string | null>(null);
   const [success, setSuccess]           = useState(false);
   const [copied, setCopied]             = useState(false);
+  const [isAddLinkModalOpen, setIsAddLinkModalOpen] = useState(false);
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   // Identity
   const [username, setUsername]         = useState(user.user_metadata?.username || "");
@@ -123,6 +243,41 @@ export default function ProfileClient({ user }: { user: any }) {
     };
     fetchData();
   }, [user.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const fetchLinks = async () => {
+    const { data, error } = await supabase
+      .from("links")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("position", { ascending: true });
+
+    if (!error) setLinks(data || []);
+  };
+
+  const handleDeleteLink = async (id: string) => {
+    if (!confirm("¿Estás seguro de que quieres eliminar este enlace?")) return;
+    const { error } = await supabase.from("links").delete().eq("id", id);
+    if (!error) setLinks(links.filter((l) => l.id !== id));
+  };
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = links.findIndex((l) => l.id === active.id);
+    const newIndex = links.findIndex((l) => l.id === over.id);
+    const reordered = arrayMove(links, oldIndex, newIndex);
+
+    // Optimistic update
+    setLinks(reordered);
+
+    // Persist all positions to Supabase
+    const updates = reordered.map((link, index) =>
+      supabase.from("links").update({ position: index }).eq("id", link.id)
+    );
+    await Promise.all(updates);
+  };
+
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -278,6 +433,14 @@ export default function ProfileClient({ user }: { user: any }) {
             </div>
             {/* Public link */}
             <div className="flex items-center gap-1">
+              <button
+                onClick={() => setIsScannerOpen(true)}
+                title="Auditoría de Seguridad Cerrojo"
+                className="p-2 hover:bg-amber-50 dark:hover:bg-amber-950/20 rounded-lg transition-colors text-amber-500 hover:text-amber-600 mr-1 flex items-center justify-center gap-1 border border-amber-200 dark:border-amber-900/30"
+              >
+                <Shield className="w-4 h-4 animate-pulse" />
+                <span className="text-[10px] font-bold uppercase tracking-wide hidden sm:inline">Cerrojo</span>
+              </button>
               <button onClick={copyToClipboard} className="p-2 hover:bg-gray-100 dark:hover:bg-[#111] rounded-lg transition-colors text-[#999999] hover:text-[#111111] dark:hover:text-white">
                 {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
               </button>
@@ -299,11 +462,19 @@ export default function ProfileClient({ user }: { user: any }) {
             </button>
             <button
               onClick={() => setActiveSection("appearance")}
-              className={`flex items-center gap-2 pb-3 px-1 text-sm font-semibold border-b-2 transition-colors ${
+              className={`flex items-center gap-2 pb-3 px-1 mr-6 text-sm font-semibold border-b-2 transition-colors ${
                 activeSection === "appearance" ? "border-[#111111] dark:border-white text-[#111111] dark:text-white" : "border-transparent text-[#999999] hover:text-[#555]"
               }`}
             >
               <Palette className="w-3.5 h-3.5" /> Apariencia
+            </button>
+            <button
+              onClick={() => setActiveSection("links")}
+              className={`flex items-center gap-2 pb-3 px-1 text-sm font-semibold border-b-2 transition-colors ${
+                activeSection === "links" ? "border-[#111111] dark:border-white text-[#111111] dark:text-white" : "border-transparent text-[#999999] hover:text-[#555]"
+              }`}
+            >
+              <List className="w-3.5 h-3.5" /> Links
             </button>
           </div>
 
@@ -607,17 +778,68 @@ export default function ProfileClient({ user }: { user: any }) {
             </div>
           )}
 
+          {/* ── Section: LINKS ── */}
+          {activeSection === "links" && (
+            <div className="flex-1 px-8 py-6 space-y-6 overflow-y-auto custom-scrollbar">
+              <div className="flex justify-between items-center mb-4">
+                <div>
+                  <h2 className="text-sm font-bold">Tus enlaces</h2>
+                  {links.length > 1 && (
+                    <p className="text-[10px] text-[#999999] mt-0.5">Arrastra para reordenar</p>
+                  )}
+                </div>
+                <button
+                  onClick={() => setIsAddLinkModalOpen(true)}
+                  className="flex items-center gap-1.5 bg-[#111111] dark:bg-white text-white dark:text-black px-4 py-2.5 rounded-xl font-semibold hover:opacity-90 transition-all shadow-sm active:scale-[0.98] text-xs"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Añadir enlace</span>
+                </button>
+              </div>
+
+              {links.length > 0 ? (
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                >
+                  <SortableContext items={links.map((l) => l.id)} strategy={verticalListSortingStrategy}>
+                    <div className="grid gap-3">
+                      {links.map((link) => (
+                        <SortableLinkItem key={link.id} link={link} onDelete={handleDeleteLink} />
+                      ))}
+                    </div>
+                  </SortableContext>
+                </DndContext>
+              ) : (
+                <div className="py-10 border-2 border-dashed border-[#eeeeee] dark:border-[#222] rounded-[2rem] flex flex-col items-center justify-center text-center p-4">
+                  <p className="text-xs text-[#555] dark:text-[#a1a1aa] mb-4">
+                    Aún no tienes enlaces. ¡Añade tu primer enlace!
+                  </p>
+                  <button
+                    onClick={() => setIsAddLinkModalOpen(true)}
+                    className="bg-[#111111] dark:bg-white text-white dark:text-black px-4 py-2 rounded-xl font-semibold hover:opacity-90 text-xs shadow-sm"
+                  >
+                    + Añadir enlace
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Save button */}
-          <div className="px-8 pb-6">
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="w-full bg-[#111111] dark:bg-white text-white dark:text-black py-4 rounded-xl font-bold flex items-center justify-center gap-2 shadow-xl shadow-black/10 hover:opacity-90 transition-opacity disabled:opacity-50"
-            >
-              {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : success ? <Check className="w-5 h-5" /> : <Save className="w-5 h-5" />}
-              {saving ? "Guardando..." : success ? "¡Guardado!" : "Guardar Cambios"}
-            </button>
-          </div>
+          {activeSection !== "links" && (
+            <div className="px-8 pb-6">
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="w-full bg-[#111111] dark:bg-white text-white dark:text-black py-4 rounded-xl font-bold flex items-center justify-center gap-2 shadow-xl shadow-black/10 hover:opacity-90 transition-opacity disabled:opacity-50"
+              >
+                {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : success ? <Check className="w-5 h-5" /> : <Save className="w-5 h-5" />}
+                {saving ? "Guardando..." : success ? "¡Guardado!" : "Guardar Cambios"}
+              </button>
+            </div>
+          )}
         </aside>
 
         {/* ── RIGHT PANEL: LIVE PREVIEW ── */}
@@ -716,48 +938,55 @@ export default function ProfileClient({ user }: { user: any }) {
 
                   {/* Links — EXACTLY matching ProfileView rendering */}
                   <div className={`w-full max-w-[260px] mx-auto ${isCard ? "grid grid-cols-2 gap-3" : "space-y-2.5"}`}>
-                    {mainLinks.length > 0 ? mainLinks.map((link) => (
-                      <div
-                        key={link.id}
-                        className={
-                          isCard
-                            ? `group relative aspect-[4/5] w-full overflow-hidden flex flex-col justify-end transition-all duration-300 ${btnClass} shadow-xl border border-white/10`
-                            : `w-full flex items-center gap-3 px-4 py-3.5 border transition-all ${btnClass} ${
-                                isOutline
-                                  ? "border-2 bg-transparent"
-                                  : "bg-[#111111] dark:bg-white border-transparent"
-                              }`
-                        }
-                        style={!isCard && isOutline ? { borderColor: themeColor, color: themeColor } : {}}
-                      >
-                        {isCard ? (
-                          <>
-                            <div className="absolute inset-0 bg-gray-800">
-                              <img src={link.thumbnail_url || `https://source.unsplash.com/random/400x500?${link.title}`} className="w-full h-full object-cover opacity-80" alt={link.title} />
-                            </div>
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                            <div className="relative z-10 p-3 w-full text-center">
-                              <div className="w-6 h-6 mx-auto mb-1 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/20">
-                                <PlatformIcon id={link.icon} className="w-3 h-3 text-white" />
+                    {mainLinks.length > 0 ? mainLinks.map((link) => {
+                      const isSensitive = ["onlyfans.com", "fansly.com", "patreon.com", "justforfans.com"].some(
+                        (domain) => link.url?.toLowerCase().includes(domain)
+                      );
+                      return (
+                        <div
+                          key={link.id}
+                          className={
+                            isCard
+                              ? `group relative aspect-[4/5] w-full overflow-hidden flex flex-col justify-end transition-all duration-300 ${btnClass} shadow-xl border border-white/10`
+                              : `w-full flex items-center gap-3 px-4 py-3.5 border transition-all ${btnClass} ${
+                                  isOutline
+                                    ? "border-2 bg-transparent"
+                                    : "bg-[#111111] dark:bg-white border-transparent"
+                                }`
+                          }
+                          style={!isCard && isOutline ? { borderColor: themeColor, color: themeColor } : {}}
+                        >
+                          {isCard ? (
+                            <>
+                              <div className="absolute inset-0 bg-gray-800">
+                                <img src={link.thumbnail_url || `https://source.unsplash.com/random/400x500?${link.title}`} className="w-full h-full object-cover opacity-80" alt={link.title} />
                               </div>
-                              <span className="font-bold text-white text-[10px] line-clamp-2 leading-tight">
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                              <div className="relative z-10 p-3 w-full text-center">
+                                <div className="w-6 h-6 mx-auto mb-1 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/20">
+                                  <PlatformIcon id={link.icon} className="w-3 h-3 text-white" />
+                                </div>
+                                <span className="font-bold text-white text-[10px] line-clamp-2 leading-tight flex items-center justify-center gap-0.5">
+                                  {link.title}
+                                  {isSensitive && <span className="text-[8px]">🔒</span>}
+                                </span>
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <PlatformIcon
+                                id={link.icon}
+                                className={`w-4 h-4 flex-shrink-0 ${isOutline ? "" : "text-white dark:text-black"}`}
+                              />
+                              <span className={`text-xs font-bold truncate flex-1 text-left flex items-center gap-1 ${isOutline ? "" : "text-white dark:text-black"}`}>
                                 {link.title}
+                                {isSensitive && <span className="opacity-60 text-[9px]">🔒</span>}
                               </span>
-                            </div>
-                          </>
-                        ) : (
-                          <>
-                            <PlatformIcon
-                              id={link.icon}
-                              className={`w-4 h-4 flex-shrink-0 ${isOutline ? "" : "text-white dark:text-black"}`}
-                            />
-                            <span className={`text-xs font-bold truncate flex-1 text-left ${isOutline ? "" : "text-white dark:text-black"}`}>
-                              {link.title}
-                            </span>
-                          </>
-                        )}
-                      </div>
-                    )) : (
+                            </>
+                          )}
+                        </div>
+                      );
+                    }) : (
                       // Placeholder links when empty
                       ["Link 1", "Link 2", "Link 3"].map((name, i) => (
                         <div
@@ -783,6 +1012,63 @@ export default function ProfileClient({ user }: { user: any }) {
         isOpen={isUpgradeModalOpen} 
         onClose={() => setIsUpgradeModalOpen(false)} 
         featureName={upgradeFeatureName} 
+      />
+
+      <AddLinkModal
+        isOpen={isAddLinkModalOpen}
+        onClose={() => setIsAddLinkModalOpen(false)}
+        onSuccess={fetchLinks}
+      />
+
+      <SecurityScannerModal
+        isOpen={isScannerOpen}
+        onClose={() => setIsScannerOpen(false)}
+        profile={{
+          id: user.id,
+          display_name: displayName,
+          bio,
+          seo_title: seoTitle,
+          seo_description: seoDescription,
+        }}
+        links={links}
+        userPlan={userPlan}
+        onFix={async (profileUpdates, linksUpdates) => {
+          setDisplayName(profileUpdates.display_name);
+          setBio(profileUpdates.bio);
+          setSeoTitle(profileUpdates.seo_title);
+          setSeoDescription(profileUpdates.seo_description);
+
+          const { error: upsertErr } = await supabase.from("profiles").upsert({
+            id:           user.id,
+            username,
+            display_name: profileUpdates.display_name,
+            bio:          profileUpdates.bio,
+            avatar_url:   avatarUrl,
+            theme_color:  themeColor,
+            button_style: buttonStyle,
+            font_family:  fontFamily,
+            template_id:  templateId,
+            background_type: backgroundType,
+            background_value: backgroundValue,
+            background_blur: backgroundBlur,
+            layout_mode:  layoutMode,
+            seo_title:    profileUpdates.seo_title,
+            seo_description: profileUpdates.seo_description,
+            updated_at:   new Date().toISOString(),
+          });
+          if (upsertErr) throw upsertErr;
+
+          setLinks(linksUpdates);
+          
+          const linkUpdates = linksUpdates.map((link) => 
+            supabase.from("links").update({ title: link.title }).eq("id", link.id)
+          );
+          await Promise.all(linkUpdates);
+
+          setSuccess(true);
+          setTimeout(() => setSuccess(false), 3000);
+        }}
+        onOpenUpgradeModal={handlePremiumFeatureClick}
       />
     </div>
   );

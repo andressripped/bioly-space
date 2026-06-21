@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { PlatformIcon } from "@/components/PlatformIcon";
-import { Share2, Mail, Check, Loader2 } from "lucide-react";
+import { Share2, Mail, Check, Loader2, EyeOff } from "lucide-react";
 import { FONT_CLASSES } from "@/lib/fonts";
 import { renderWithAppleEmojis } from "@/utils/emoji";
 
@@ -15,6 +15,8 @@ const getSafeReferrer = () => {
     return document.referrer || "direct";
   }
 };
+
+const ADULT_DOMAINS = ["onlyfans.com", "fansly.com", "patreon.com", "justforfans.com"];
 
 // Same mapping as ProfileClient — single source of truth
 const BUTTON_STYLE_MAP: Record<string, string> = {
@@ -35,6 +37,7 @@ export default function ProfileView({ profile, links }: ProfileViewProps) {
   const [email, setEmail] = useState("");
   const [subscribing, setSubscribing] = useState(false);
   const [subscribeMessage, setSubscribeMessage] = useState({ text: "", isError: false });
+  const [activeSensitiveLink, setActiveSensitiveLink] = useState<any | null>(null);
 
   // Resolve style classes from profile data
   const btnClass  = BUTTON_STYLE_MAP[profile.button_style ?? "rounded"] ?? "rounded-2xl";
@@ -172,14 +175,23 @@ export default function ProfileView({ profile, links }: ProfileViewProps) {
         {/* SOCIAL BUBBLES */}
         {socialLinks.length > 0 && (
           <div className="flex flex-wrap items-center justify-center gap-3 mb-10">
-            {socialLinks.map((link) => (
-              <a
-                key={link.id}
-                href={link.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => handleLinkClick(link)}
-                className="relative w-12 h-12 flex-shrink-0 rounded-full flex items-center justify-center transition-transform hover:scale-110 shadow-lg border border-black/5 dark:border-white/10 overflow-hidden"
+            {socialLinks.map((link) => {
+              const isSensitive = ADULT_DOMAINS.some(domain => link.url?.toLowerCase().includes(domain));
+              return (
+                <a
+                  key={link.id}
+                  href={isSensitive ? "#" : link.url}
+                  target={isSensitive ? undefined : "_blank"}
+                  rel="noopener noreferrer"
+                  onClick={(e) => {
+                    if (isSensitive) {
+                      e.preventDefault();
+                      setActiveSensitiveLink(link);
+                    } else {
+                      handleLinkClick(link);
+                    }
+                  }}
+                  className="relative w-12 h-12 flex-shrink-0 rounded-full flex items-center justify-center transition-transform hover:scale-110 shadow-lg border border-black/5 dark:border-white/10 overflow-hidden"
                 style={{
                   background: link.icon === 'instagram' ? 'linear-gradient(45deg, #ffe17d 0%, #fa9137 20%, #eb4141 40%, #c43aee 70%, #4c64d3 100%)'
                     : link.icon === 'tiktok' ? '#000000'
@@ -197,28 +209,38 @@ export default function ProfileView({ profile, links }: ProfileViewProps) {
               >
                 <PlatformIcon id={link.icon} className="w-6 h-6" />
               </a>
-            ))}
+            );
+          })}
           </div>
         )}
 
         {/* MAIN LINKS */}
         <div className={`w-full ${isCard ? "grid grid-cols-2 sm:grid-cols-2 gap-4" : "space-y-3"}`}>
-          {mainLinks.map((link) => (
-            <a
-              key={link.id}
-              href={link.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => handleLinkClick(link)}
-              className={
-                isCard
-                  ? `group relative aspect-[4/5] w-full overflow-hidden flex flex-col justify-end transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] ${btnClass} shadow-xl border border-white/10`
-                  : `group flex items-center gap-4 px-5 py-4 transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.98] ${btnClass} ${
-                      isOutline
-                        ? "bg-transparent border-2 hover:opacity-80"
-                        : "bg-[#111111] dark:bg-white border border-transparent hover:opacity-90 shadow-md hover:shadow-lg"
-                    }`
-              }
+          {mainLinks.map((link) => {
+            const isSensitive = ADULT_DOMAINS.some(domain => link.url?.toLowerCase().includes(domain));
+            return (
+              <a
+                key={link.id}
+                href={isSensitive ? "#" : link.url}
+                target={isSensitive ? undefined : "_blank"}
+                rel="noopener noreferrer"
+                onClick={(e) => {
+                  if (isSensitive) {
+                    e.preventDefault();
+                    setActiveSensitiveLink(link);
+                  } else {
+                    handleLinkClick(link);
+                  }
+                }}
+                className={
+                  isCard
+                    ? `group relative aspect-[4/5] w-full overflow-hidden flex flex-col justify-end transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] ${btnClass} shadow-xl border border-white/10`
+                    : `group flex items-center gap-4 px-5 py-4 transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.98] ${btnClass} ${
+                        isOutline
+                          ? "bg-transparent border-2 hover:opacity-80"
+                          : "bg-[#111111] dark:bg-white border border-transparent hover:opacity-90 shadow-md hover:shadow-lg"
+                      }`
+                }
               style={!isCard && isOutline ? { borderColor: themeColor, color: themeColor } : {}}
             >
               {isCard ? (
@@ -258,7 +280,8 @@ export default function ProfileView({ profile, links }: ProfileViewProps) {
                 </>
               )}
             </a>
-          ))}
+          );
+        })}
 
           {mainLinks.length === 0 && (
             <div className="text-center py-10 opacity-40">
@@ -318,6 +341,48 @@ export default function ProfileView({ profile, links }: ProfileViewProps) {
           </a>
         </footer>
       </main>
+
+      {/* ── +18 CONTENT WARNING OVERLAY ── */}
+      {activeSensitiveLink && (
+        <div className="fixed inset-0 z-[150] flex flex-col items-center justify-center p-6 bg-black/60 backdrop-blur-xl animate-in fade-in duration-300">
+          <div className="flex flex-col items-center text-center max-w-sm space-y-6">
+            
+            <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center border border-white/20 shadow-lg backdrop-blur-md">
+              <EyeOff className="w-7 h-7 text-white" />
+            </div>
+
+            <div className="space-y-2">
+              <h2 className="text-xl font-bold text-white tracking-tight">
+                18+ Content Warning
+              </h2>
+              <p className="text-sm text-gray-300/90 leading-relaxed font-medium">
+                This link may contain graphic or adult content.
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-2 w-full pt-4">
+              <button
+                onClick={() => {
+                  handleLinkClick(activeSensitiveLink);
+                  const urlBase64 = typeof window !== "undefined" ? btoa(activeSensitiveLink.url) : Buffer.from(activeSensitiveLink.url).toString('base64');
+                  window.open(atob(urlBase64), "_blank");
+                  setActiveSensitiveLink(null);
+                }}
+                className="w-full bg-white text-black py-4 rounded-full font-bold hover:bg-gray-100 transition-colors shadow-lg text-sm"
+              >
+                Continue
+              </button>
+              <button
+                onClick={() => setActiveSensitiveLink(null)}
+                className="w-full py-3.5 rounded-full font-semibold text-xs text-gray-400 hover:text-white transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
     </div>
   );
 }
