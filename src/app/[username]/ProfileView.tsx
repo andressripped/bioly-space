@@ -326,15 +326,15 @@ export default function ProfileView({ profile, links }: ProfileViewProps) {
                   onClick={() => openPaywall(link)}
                   className={
                     isCard
-                      ? `group relative aspect-[4/5] w-full overflow-hidden flex flex-col items-center justify-center gap-2 p-4 text-center transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] ${btnClass} border-2 border-dashed border-black/10 bg-black/[0.02]`
-                      : `w-full flex items-center gap-4 px-5 py-4 transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.98] ${btnClass} border-2 border-dashed border-black/10 bg-black/[0.02]`
+                      ? `group relative aspect-[4/5] w-full overflow-hidden flex flex-col items-center justify-center gap-2 p-4 text-center transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] ${btnClass} border border-white/15 bg-black/60 backdrop-blur-sm text-white shadow-lg`
+                      : `w-full flex items-center gap-4 px-5 py-4 transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.98] ${btnClass} border border-white/15 bg-black/60 backdrop-blur-sm text-white shadow-lg`
                   }
                 >
-                  <div className="w-9 h-9 flex items-center justify-center rounded-xl flex-shrink-0 bg-black/5">
+                  <div className="w-9 h-9 flex items-center justify-center rounded-xl flex-shrink-0 bg-white/10">
                     <PiLockKey className="w-5 h-5" />
                   </div>
                   <span className={`font-bold text-base ${isCard ? "" : "flex-1 text-left"}`}>{link.title}</span>
-                  <span className="text-sm font-bold px-3 py-1.5 rounded-full bg-black/5 flex-shrink-0">
+                  <span className="text-sm font-bold px-3 py-1.5 rounded-full bg-white/10 flex-shrink-0">
                     ${Number(link.price_usd).toFixed(2)} USD/mes
                   </span>
                 </button>
