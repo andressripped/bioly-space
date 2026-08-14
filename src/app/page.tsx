@@ -113,7 +113,7 @@ function TypingClaim() {
       transition={{ duration: 0.8, delay: 0.3 }}
       className="w-full flex flex-col items-center justify-center text-center px-4"
     >
-      <div className="font-mono text-3xl sm:text-4xl lg:text-5xl flex items-baseline justify-center flex-wrap gap-x-1">
+      <div className="font-mono text-3xl sm:text-4xl lg:text-5xl flex items-baseline justify-center flex-wrap gap-x-1 min-h-[4.75rem] sm:min-h-0 content-center">
         <span className="text-[#bbbbbb] dark:text-[#444]">bioly.space/</span>
         <span className="text-[#111111] dark:text-white font-bold">{visible}</span>
         <span className="w-[3px] h-[0.85em] bg-[#111111] dark:bg-white animate-pulse translate-y-[1px]" />
@@ -230,8 +230,8 @@ export default function Home() {
       </section>
 
       {/* STORY SECTION 1 — Links (light) */}
-      <section className="py-14 sm:py-28 px-6 border-t border-[#eeeeee] dark:border-[#222] transition-colors duration-300 overflow-hidden">
-        <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
+      <section className="py-8 sm:py-28 px-6 border-t border-[#eeeeee] dark:border-[#222] transition-colors duration-300 overflow-hidden">
+        <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-6 lg:gap-16 items-center">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -252,7 +252,7 @@ export default function Home() {
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true, amount: 0.4 }}
             transition={{ duration: 0.8, ease: "easeOut" }}
-            className="order-1 lg:order-2 relative h-[360px] flex items-center justify-center"
+            className="order-1 lg:order-2 relative h-[220px] sm:h-[360px] flex items-center justify-center"
           >
             {[
               { icon: PiTShirt, rotate: -6, x: -70, y: 30, title: "My Merch Store", tint: "emerald" },
@@ -261,7 +261,7 @@ export default function Home() {
             ].map((card, i) => (
               <div
                 key={i}
-                className="absolute w-64 bg-white dark:bg-[#111] border border-[#eeeeee] dark:border-[#222] rounded-2xl p-5 shadow-xl flex items-center gap-4"
+                className="absolute w-56 sm:w-64 bg-white dark:bg-[#111] border border-[#eeeeee] dark:border-[#222] rounded-2xl p-4 sm:p-5 shadow-xl flex items-center gap-4"
                 style={{ transform: `translate(${card.x}px, ${card.y}px) rotate(${card.rotate}deg)`, zIndex: i }}
               >
                 <div className={`w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 ${
