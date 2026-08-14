@@ -4,14 +4,13 @@ import { motion } from "framer-motion";
 import { PiArrowRight, PiTShirt, PiHeadphones } from "react-icons/pi";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { InstagramIcon, TiktokIcon, YoutubeIcon } from "@/components/icons";
 import { useTheme } from "next-themes";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 
 const translations = {
   EN: {
-    badge: "For the new generation of creators",
+    badge: "One link for everything you are",
     title: "Claim your digital identity.",
     subtitle: "Consolidate your links, content, and business in an elegant space designed to convert followers into clients.",
     placeholder: "username",
@@ -23,13 +22,15 @@ const translations = {
     mock_card2_desc: "Listen to the new interview",
     mock_vlog: "LATEST VLOG",
     nav_login: "Sign in",
-    bento_title1: "Multiple Links. One destination.",
+    bento_title1: "Multiple links. One destination.",
     bento_desc1: "Organize your portfolio, stores and social media in a centralized hub with impeccable design.",
-    bento_title2: "Real-time\nAnalytics",
-    bento_desc2: "Measure your impact visually.",
+    bento_title2: "Know your audience.",
+    bento_desc2: "Real-time analytics on every view and click, visualized beautifully — no spreadsheets required.",
+    cta_title: "Your space. Your rules.",
+    cta_subtitle: "Free to start. Ready in under a minute.",
   },
   ES: {
-    badge: "Para la nueva generación de creadores",
+    badge: "Un solo link para todo lo que eres",
     title: "Reclama tu identidad digital.",
     subtitle: "Consolida tus enlaces, contenido y negocio en un espacio elegante diseñado para convertir seguidores en clientes.",
     placeholder: "usuario",
@@ -41,13 +42,15 @@ const translations = {
     mock_card2_desc: "Escucha mi última entrevista",
     mock_vlog: "ÚLTIMO VLOG",
     nav_login: "Entrar",
-    bento_title1: "Múltiples Enlaces. Un solo destino.",
+    bento_title1: "Múltiples enlaces. Un solo destino.",
     bento_desc1: "Organiza tu portafolio, tiendas y redes sociales en un hub centralizado con un diseño impecable.",
-    bento_title2: "Analíticas\nen tiempo real",
-    bento_desc2: "Mide tu impacto visualmente.",
+    bento_title2: "Conoce a tu audiencia.",
+    bento_desc2: "Analíticas en tiempo real de cada vista y cada clic, visualizadas de forma hermosa — sin hojas de cálculo.",
+    cta_title: "Tu espacio. Tus reglas.",
+    cta_subtitle: "Gratis para empezar. Listo en menos de un minuto.",
   },
   PT: {
-    badge: "Para a nova geração de criadores",
+    badge: "Um único link para tudo o que você é",
     title: "Reivindique sua identidade digital.",
     subtitle: "Consolide seus links, conteúdo e negócios em um espaço elegante projetado para converter seguidores em clientes.",
     placeholder: "usuario",
@@ -59,14 +62,69 @@ const translations = {
     mock_card2_desc: "Ouça a última entrevista",
     mock_vlog: "ÚLTIMO VLOG",
     nav_login: "Entrar",
-    bento_title1: "Múltiplos Links. Um único destino.",
+    bento_title1: "Múltiplos links. Um único destino.",
     bento_desc1: "Organize seu portfólio, lojas e redes sociais em um hub centralizado com design impecável.",
-    bento_title2: "Análises\nem tempo real",
-    bento_desc2: "Meça seu impacto visualmente.",
+    bento_title2: "Conheça seu público.",
+    bento_desc2: "Análises em tempo real de cada visualização e clique, visualizadas com beleza — sem planilhas.",
+    cta_title: "Seu espaço. Suas regras.",
+    cta_subtitle: "Grátis para começar. Pronto em menos de um minuto.",
   }
 };
 
 type Locale = "EN" | "ES" | "PT";
+
+const EXAMPLE_USERNAMES = ["maria", "estudio.creativo", "juan.musica", "laura.fit", "elpatio.cafe"];
+
+function TypingClaim() {
+  const [wordIndex, setWordIndex] = useState(0);
+  const [charCount, setCharCount] = useState(0);
+  const [deleting, setDeleting] = useState(false);
+
+  useEffect(() => {
+    const word = EXAMPLE_USERNAMES[wordIndex];
+    const delay = deleting ? 45 : charCount === word.length ? 1400 : 90;
+
+    const timer = setTimeout(() => {
+      if (!deleting) {
+        if (charCount < word.length) {
+          setCharCount((c) => c + 1);
+        } else {
+          setDeleting(true);
+        }
+      } else {
+        if (charCount > 0) {
+          setCharCount((c) => c - 1);
+        } else {
+          setDeleting(false);
+          setWordIndex((i) => (i + 1) % EXAMPLE_USERNAMES.length);
+        }
+      }
+    }, delay);
+
+    return () => clearTimeout(timer);
+  }, [charCount, deleting, wordIndex]);
+
+  const visible = EXAMPLE_USERNAMES[wordIndex].slice(0, charCount);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.8, delay: 0.3 }}
+      className="w-full flex flex-col items-center justify-center text-center px-4"
+    >
+      <div className="font-mono text-3xl sm:text-4xl lg:text-5xl flex items-baseline justify-center flex-wrap gap-x-1">
+        <span className="text-[#bbbbbb] dark:text-[#444]">bioly.space/</span>
+        <span className="text-[#111111] dark:text-white font-bold">{visible}</span>
+        <span className="w-[3px] h-[0.85em] bg-[#111111] dark:bg-white animate-pulse translate-y-[1px]" />
+      </div>
+      <div className="mt-5 flex items-center gap-1.5 text-xs text-[#999999] dark:text-[#666]">
+        <span className="w-1 h-1 rounded-full bg-emerald-500" />
+        Disponible
+      </div>
+    </motion.div>
+  );
+}
 
 export default function Home() {
   const [lang, setLang] = useState<Locale>("EN");
@@ -91,159 +149,197 @@ export default function Home() {
       <Navbar lang={lang} setLang={setLang} t={t} />
 
       {/* HERO SECTION */}
-      <section className="pt-40 pb-20 px-6">
-        <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
-          
-          {/* TEXT CONTENT */}
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-            className="max-w-xl"
-          >
-            <div className="inline-block border border-[#eeeeee] dark:border-[#222] rounded-full px-4 py-1.5 mb-8 bg-[#f9fafb] dark:bg-[#0a0a0a]">
-              <span className="text-xs font-semibold uppercase tracking-widest text-[#555555] dark:text-[#888]">{t.badge}</span>
-            </div>
-            
-            <h1 className="text-6xl md:text-7xl font-serif text-[#111111] dark:text-white tracking-tight mb-6 leading-[1.1]">
-              {t.title}
-            </h1>
-            
-            <p className="text-lg text-[#555555] dark:text-[#a1a1aa] mb-10 font-light leading-relaxed">
-              {t.subtitle}
-            </p>
+      <section className="pt-28 pb-10 lg:pt-40 lg:pb-20 px-6">
+        <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-6 lg:gap-16 items-center">
 
-            <div className="flex flex-col sm:flex-row gap-3">
-              <div className="relative flex-1">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#999999] dark:text-[#666] font-medium">bioly.space/</span>
-                <input 
-                  type="text" 
+          {/* TEXT CONTENT — fills the first mobile viewport on its own, so the visual only appears on scroll */}
+          <div className="max-w-xl min-h-[calc(100dvh-8rem)] lg:min-h-0 flex flex-col justify-center">
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, ease: "easeOut" }}
+              className="inline-flex items-center gap-2 mb-8"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 flex-shrink-0" />
+              <span className="text-xs font-semibold uppercase tracking-widest text-[#555555] dark:text-[#888]">{t.badge}</span>
+            </motion.div>
+
+            <motion.h1
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.1, ease: "easeOut" }}
+              className="text-6xl md:text-7xl font-bold text-[#111111] dark:text-white tracking-tight mb-6 leading-[1.1]"
+            >
+              {t.title}
+            </motion.h1>
+
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.2, ease: "easeOut" }}
+              className="text-lg text-[#555555] dark:text-[#a1a1aa] mb-10 font-light leading-relaxed"
+            >
+              {t.subtitle}
+            </motion.p>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.3, ease: "easeOut" }}
+              className="flex items-center gap-1 p-1.5 bg-white/70 dark:bg-[#0a0a0a]/70 backdrop-blur-xl border border-[#eeeeee] dark:border-[#222] rounded-2xl shadow-lg shadow-black/5 dark:shadow-white/5 max-w-md"
+            >
+              <div className="relative flex-1 min-w-0">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#999999] dark:text-[#666] font-medium text-sm pointer-events-none">bioly.space/</span>
+                <input
+                  type="text"
                   placeholder={t.placeholder}
                   value={claimUsername}
                   onChange={(e) => setClaimUsername(e.target.value)}
-                  className="w-full bg-[#f9fafb] dark:bg-[#0a0a0a] border border-[#eeeeee] dark:border-[#222] rounded-xl py-4 pl-[110px] pr-4 text-[#111111] dark:text-white font-medium focus:outline-none focus:border-[#111111] dark:focus:border-[#666] transition-colors"
+                  className="w-full bg-transparent py-3.5 pl-[98px] pr-3 text-[#111111] dark:text-white font-medium text-sm focus:outline-none"
                 />
               </div>
-              <Link 
-                href={`/login?username=${claimUsername}`} 
-                className="bg-[#111111] dark:bg-white text-white dark:text-black px-8 py-4 rounded-xl font-medium hover:bg-black dark:hover:bg-gray-200 transition-colors flex items-center justify-center gap-2 group cursor-pointer"
+              <Link
+                href={`/login?username=${claimUsername}`}
+                className="flex-shrink-0 bg-[#111111] dark:bg-white text-white dark:text-black px-6 py-3.5 rounded-xl font-medium text-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2 group cursor-pointer"
               >
                 {t.claim}
                 <PiArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </Link>
-            </div>
-            
-            <div className="mt-12 flex items-center gap-4 text-sm text-[#999999] dark:text-[#666] font-medium">
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.7, delay: 0.5 }}
+              className="mt-10 flex items-center gap-3 text-sm text-[#999999] dark:text-[#666] font-medium"
+            >
               <div className="flex -space-x-2">
-                <div className="w-8 h-8 rounded-full border-2 border-white dark:border-[#050505] bg-gray-200 overflow-hidden"><img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&q=80" alt="Creator" /></div>
-                <div className="w-8 h-8 rounded-full border-2 border-white dark:border-[#050505] bg-gray-200 overflow-hidden"><img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&q=80" alt="Creator" /></div>
-                <div className="w-8 h-8 rounded-full border-2 border-white dark:border-[#050505] bg-gray-200 overflow-hidden"><img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&q=80" alt="Creator" /></div>
+                <div className="w-8 h-8 rounded-full border-2 border-white dark:border-[#050505] bg-gray-200 overflow-hidden"><img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&q=80" alt="Creator" className="w-full h-full object-cover" /></div>
+                <div className="w-8 h-8 rounded-full border-2 border-white dark:border-[#050505] bg-gray-200 overflow-hidden"><img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&q=80" alt="Creator" className="w-full h-full object-cover" /></div>
+                <div className="w-8 h-8 rounded-full border-2 border-white dark:border-[#050505] bg-gray-200 overflow-hidden"><img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&q=80" alt="Creator" className="w-full h-full object-cover" /></div>
               </div>
               {t.trusted}
-            </div>
+            </motion.div>
+          </div>
+
+          {/* ABSTRACT HERO VISUAL — soft light + floating profile, no device chrome */}
+          <div className="relative flex items-center justify-center py-10 lg:h-[560px] lg:py-0">
+            <TypingClaim />
+          </div>
+        </div>
+      </section>
+
+      {/* STORY SECTION 1 — Links (light) */}
+      <section className="py-14 sm:py-28 px-6 border-t border-[#eeeeee] dark:border-[#222] transition-colors duration-300 overflow-hidden">
+        <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.4 }}
+            transition={{ duration: 0.7, ease: "easeOut" }}
+            className="order-2 lg:order-1"
+          >
+            <h3 className="text-4xl md:text-5xl font-bold text-[#111111] dark:text-white mb-6 leading-tight max-w-md">
+              {t.bento_title1}
+            </h3>
+            <p className="text-[#555555] dark:text-[#a1a1aa] max-w-md text-lg leading-relaxed font-light">
+              {t.bento_desc1}
+            </p>
           </motion.div>
 
-          {/* REALISTIC IPHONE MOCKUP */}
           <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, delay: 0.2, type: "spring" }}
-            className="relative flex justify-center lg:justify-center"
+            initial={{ opacity: 0, scale: 0.92 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true, amount: 0.4 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+            className="order-1 lg:order-2 relative h-[360px] flex items-center justify-center"
           >
-            {/* Phone Hardware */}
-            <div className="relative w-[340px] h-[720px] bg-[#f5f5f7] dark:bg-[#111] rounded-[3.5rem] shadow-2xl p-[12px] shadow-black/10 dark:shadow-white/5 border border-[#e5e5e5] dark:border-[#222] transition-colors duration-300 scale-[0.65] lg:scale-100 origin-top">
-              
-              {/* Hardware Buttons */}
-              <div className="absolute top-[120px] -left-[2px] w-[2px] h-[26px] bg-[#d1d1d6] dark:bg-[#333] rounded-l-sm transition-colors duration-300" />
-              <div className="absolute top-[170px] -left-[2px] w-[2px] h-[50px] bg-[#d1d1d6] dark:bg-[#333] rounded-l-sm transition-colors duration-300" />
-              <div className="absolute top-[235px] -left-[2px] w-[2px] h-[50px] bg-[#d1d1d6] dark:bg-[#333] rounded-l-sm transition-colors duration-300" />
-              <div className="absolute top-[190px] -right-[2px] w-[2px] h-[75px] bg-[#d1d1d6] dark:bg-[#333] rounded-r-sm transition-colors duration-300" />
-
-              {/* Screen */}
-              <div className="relative w-full h-full bg-[#ffffff] dark:bg-[#0a0a0a] rounded-[2.8rem] overflow-hidden isolate transition-colors duration-300">
-                
-                {/* Dynamic Island */}
-                <div className="absolute top-2.5 left-1/2 -translate-x-1/2 w-[120px] h-[35px] bg-black rounded-full z-50 flex items-center justify-end px-3">
-                  <div className="w-[10px] h-[10px] rounded-full bg-[#0a0a0a] border border-white/10 flex items-center justify-center">
-                    <div className="w-[4px] h-[4px] rounded-full bg-blue-900/40" />
-                  </div>
+            {[
+              { icon: PiTShirt, rotate: -6, x: -70, y: 30, title: "My Merch Store", tint: "emerald" },
+              { icon: PiHeadphones, rotate: 3, x: 20, y: -20, title: "Podcast Episode", tint: "violet" },
+              { icon: PiArrowRight, rotate: 10, x: 90, y: 40, title: "Latest Drop", tint: "amber" },
+            ].map((card, i) => (
+              <div
+                key={i}
+                className="absolute w-64 bg-white dark:bg-[#111] border border-[#eeeeee] dark:border-[#222] rounded-2xl p-5 shadow-xl flex items-center gap-4"
+                style={{ transform: `translate(${card.x}px, ${card.y}px) rotate(${card.rotate}deg)`, zIndex: i }}
+              >
+                <div className={`w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 ${
+                  card.tint === "emerald" ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400" :
+                  card.tint === "violet" ? "bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400" :
+                  "bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400"
+                }`}>
+                  <card.icon className="w-5 h-5" />
                 </div>
-
-                {/* UI Inside Screen */}
-                <div className="w-full h-full overflow-y-auto relative [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
-                  {/* Cover */}
-                  <div className="w-full h-[280px] relative">
-                    <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-white dark:to-[#0a0a0a] z-10 transition-colors duration-300" />
-                    <img src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=800&q=80" alt="Cover" className="w-full h-full object-cover object-top" />
-                  </div>
-
-                  {/* Profile Info */}
-                  <div className="relative z-20 -mt-20 px-5 text-center pb-24">
-                    <div className="w-28 h-28 mx-auto rounded-full p-1 bg-white dark:bg-[#0a0a0a] mb-4 shadow-xl transition-colors duration-300">
-                      <div className="w-full h-full rounded-full overflow-hidden bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-                        <img src="https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400&q=80" className="w-full h-full object-cover" />
-                      </div>
-                    </div>
-                    <h2 className="text-2xl font-serif text-[#111111] dark:text-white mb-1">Janice Rivera</h2>
-                    <p className="text-[#555555] dark:text-[#a1a1aa] text-sm mb-6 font-medium">@janice</p>
-
-                    {/* Social Circles */}
-                    <div className="flex justify-center gap-4 mb-6">
-                       <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-[#f09433] via-[#e6683c] to-[#bc1888] flex items-center justify-center cursor-pointer shadow-md hover:scale-105 transition-transform">
-                          <InstagramIcon className="w-6 h-6 text-white" />
-                       </div>
-                       <div className="w-12 h-12 rounded-full bg-black dark:bg-[#222] border dark:border-[#333] flex items-center justify-center cursor-pointer shadow-md hover:scale-105 transition-transform">
-                          <TiktokIcon className="w-6 h-6 text-white" />
-                       </div>
-                       <div className="w-12 h-12 rounded-full bg-[#FF0000] flex items-center justify-center cursor-pointer shadow-md hover:scale-105 transition-transform">
-                          <YoutubeIcon className="w-6 h-6 text-white" />
-                       </div>
-                    </div>
-
-                    {/* Link Cards */}
-                    <div className="space-y-3">
-                      <div className="w-full bg-[#f9fafb] dark:bg-[#111] border border-[#eeeeee] dark:border-[#222] rounded-[1rem] p-4 flex items-center gap-4 hover:shadow-md transition-shadow cursor-pointer text-left">
-                        <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-                          <PiTShirt className="w-5 h-5" />
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-[#111111] dark:text-white">{t.mock_card1_title}</h3>
-                          <p className="text-xs text-[#555555] dark:text-[#a1a1aa]">{t.mock_card1_desc}</p>
-                        </div>
-                      </div>
-
-                      <div className="w-full bg-[#f9fafb] dark:bg-[#111] border border-[#eeeeee] dark:border-[#222] rounded-[1rem] p-4 flex items-center gap-4 hover:shadow-md transition-shadow cursor-pointer text-left">
-                        <div className="w-12 h-12 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center text-violet-600 dark:text-violet-400">
-                          <PiHeadphones className="w-5 h-5" />
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-[#111111] dark:text-white">{t.mock_card2_title}</h3>
-                          <p className="text-xs text-[#555555] dark:text-[#a1a1aa]">{t.mock_card2_desc}</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <div className="h-3 flex-1 bg-[#f0f0f0] dark:bg-[#222] rounded-full" />
               </div>
-            </div>
+            ))}
           </motion.div>
         </div>
       </section>
 
-      {/* BENTO GRID */}
-      <section className="py-24 px-6 bg-[#f9fafb] dark:bg-[#0a0a0a] border-t border-[#eeeeee] dark:border-[#222] transition-colors duration-300">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid md:grid-cols-3 gap-6">
-            <div className="md:col-span-2 bg-white dark:bg-[#111] rounded-3xl p-10 border border-[#eeeeee] dark:border-[#222] shadow-sm transition-colors duration-300">
-              <h3 className="text-3xl font-serif text-[#111111] dark:text-white mb-4">{t.bento_title1}</h3>
-              <p className="text-[#555555] dark:text-[#a1a1aa] max-w-md text-lg">{t.bento_desc1}</p>
-            </div>
-            <div className="bg-white dark:bg-[#111] rounded-3xl p-10 border border-[#eeeeee] dark:border-[#222] shadow-sm flex flex-col justify-between transition-colors duration-300">
-              <h3 className="text-3xl font-serif text-[#111111] dark:text-white whitespace-pre-line">{t.bento_title2}</h3>
-              <p className="text-[#555555] dark:text-[#a1a1aa] mt-4">{t.bento_desc2}</p>
-            </div>
-          </div>
+      {/* STORY SECTION 2 — Analytics (dark, inverted) */}
+      <section className="py-14 sm:py-28 px-6 bg-[#0a0a0a] text-white transition-colors duration-300 overflow-hidden">
+        <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.4 }}
+            transition={{ duration: 0.7, ease: "easeOut" }}
+            className="flex items-end justify-center gap-3 h-[280px] order-2 lg:order-1"
+          >
+            {[38, 62, 45, 80, 55, 95, 70].map((h, i) => (
+              <motion.div
+                key={i}
+                initial={{ height: 0 }}
+                whileInView={{ height: `${h}%` }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: i * 0.06, ease: "easeOut" }}
+                className="w-8 md:w-10 rounded-t-lg bg-gradient-to-t from-white/20 to-white"
+              />
+            ))}
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.4 }}
+            transition={{ duration: 0.7, ease: "easeOut", delay: 0.1 }}
+            className="order-1 lg:order-2"
+          >
+            <h3 className="text-4xl md:text-5xl font-bold mb-6 leading-tight max-w-md">
+              {t.bento_title2}
+            </h3>
+            <p className="text-[#a1a1aa] max-w-md text-lg leading-relaxed font-light">
+              {t.bento_desc2}
+            </p>
+          </motion.div>
         </div>
+      </section>
+
+      {/* CLOSING CTA */}
+      <section className="py-16 sm:py-32 px-6 border-t border-[#eeeeee] dark:border-[#222] transition-colors duration-300">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.5 }}
+          transition={{ duration: 0.7, ease: "easeOut" }}
+          className="max-w-2xl mx-auto text-center"
+        >
+          <h3 className="text-4xl md:text-6xl font-bold text-[#111111] dark:text-white mb-4 leading-tight">
+            {t.cta_title}
+          </h3>
+          <p className="text-[#555555] dark:text-[#a1a1aa] text-lg mb-10 font-light">
+            {t.cta_subtitle}
+          </p>
+          <Link
+            href="/signup"
+            className="inline-flex items-center gap-2 bg-[#111111] dark:bg-white text-white dark:text-black px-8 py-4 rounded-xl font-medium hover:bg-black dark:hover:bg-gray-200 transition-colors group cursor-pointer"
+          >
+            {t.claim}
+            <PiArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+          </Link>
+        </motion.div>
       </section>
 
       <Footer />

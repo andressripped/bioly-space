@@ -3,13 +3,14 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
-import { PiArrowRight, PiCheck, PiSpinner, PiCamera } from "react-icons/pi";
+import { PiArrowRight, PiArrowLeft, PiCheck, PiSpinner, PiCamera, PiSkipForward } from "react-icons/pi";
 import {
   SiInstagram, SiYoutube, SiTiktok, SiX, SiFacebook,
   SiSpotify, SiTwitch, SiDiscord, SiWhatsapp,
   SiTelegram, SiGithub,
 } from "react-icons/si";
 import { FaLinkedin } from "react-icons/fa";
+import { BIOLY_TEMPLATES, TemplateConfig } from "@/lib/templates";
 
 // Reserved usernames that cannot be used
 const RESERVED = ["admin", "dashboard", "api", "login", "signup", "settings", "about", "help", "support", "blog", "pricing", "onboarding", "auth", "bioly"];
@@ -28,6 +29,16 @@ const QUICK_PLATFORMS = [
   { id: "telegram", name: "Telegram", icon: SiTelegram, prefix: "t.me/", color: "#26A5E4" },
   { id: "github", name: "GitHub", icon: SiGithub, prefix: "github.com/", color: "#181717" },
 ];
+
+// Templates offered during onboarding — free tier only
+const ONBOARDING_TEMPLATES = BIOLY_TEMPLATES.filter((t) => t.tier === "free");
+const DEFAULT_TEMPLATE = ONBOARDING_TEMPLATES.find((t) => t.id === "default")!;
+
+function templatePreviewStyle(t: TemplateConfig): React.CSSProperties {
+  if (t.background_type === "gradient") return { background: t.background_value };
+  if (t.background_type === "image_fade") return { backgroundImage: `url(${t.background_value})`, backgroundSize: "cover", backgroundPosition: "center" };
+  return { backgroundColor: t.background_value };
+}
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -51,7 +62,9 @@ export default function OnboardingPage() {
   const [addedLinks, setAddedLinks] = useState<{ platform: typeof QUICK_PLATFORMS[0]; handle: string; url: string }[]>([]);
 
   // Step 3
-  const [themeColor, setThemeColor] = useState("#111111");
+  const [selectedTemplate, setSelectedTemplate] = useState<TemplateConfig>(DEFAULT_TEMPLATE);
+
+  const TOTAL_STEPS = 3;
 
   // Load user and pre-fill from localStorage
   useEffect(() => {
@@ -114,7 +127,9 @@ export default function OnboardingPage() {
     setAddedLinks(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleFinish = async () => {
+  const canProceedStep1 = username.length >= 3 && usernameStatus === "available" && displayName.trim().length > 0;
+
+  const saveProfileAndLinks = async (template: TemplateConfig) => {
     if (!user) return;
     setLoading(true);
     try {
@@ -136,7 +151,14 @@ export default function OnboardingPage() {
         username,
         display_name: displayName,
         avatar_url: finalAvatarUrl,
-        theme_color: themeColor,
+        template_id: template.id,
+        theme_color: template.theme_color,
+        button_style: template.button_style,
+        font_family: template.font_family,
+        background_type: template.background_type,
+        background_value: template.background_value,
+        background_blur: template.background_blur,
+        layout_mode: template.layout_mode || "classic",
         onboarding_completed: true,
         plan: "free",
         updated_at: new Date().toISOString(),
@@ -166,40 +188,44 @@ export default function OnboardingPage() {
     }
   };
 
-  const canProceedStep1 = username.length >= 3 && usernameStatus === "available" && displayName.trim().length > 0;
+  const handleFinish = () => saveProfileAndLinks(selectedTemplate);
 
-  const THEME_COLORS = ["#111111", "#6366f1", "#10b981", "#f59e0b", "#ef4444", "#ec4899", "#8b5cf6", "#0ea5e9"];
+  // "Omitir y establecer la configuración predeterminada" — only requires a valid username
+  const handleSkipAll = () => {
+    if (!canProceedStep1) return;
+    saveProfileAndLinks(DEFAULT_TEMPLATE);
+  };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-[#050505] text-[#111111] dark:text-[#f4f4f5] font-sans flex flex-col items-center justify-center p-6 transition-colors duration-300">
+    <div className="min-h-screen bg-white dark:bg-[#050505] text-[#111111] dark:text-[#f4f4f5] font-sans flex flex-col items-center px-4 py-8 sm:p-6 sm:justify-center transition-colors duration-300">
       {/* Logo */}
-      <div className="text-3xl font-extrabold tracking-tighter mb-10">bioly.</div>
+      <div className="text-2xl sm:text-3xl font-extrabold tracking-tighter mb-6 sm:mb-10">bioly.</div>
 
       {/* Step indicator */}
-      <div className="flex items-center gap-3 mb-10">
+      <div className="flex items-center gap-2 sm:gap-3 mb-6 sm:mb-10">
         {[1, 2, 3].map((s) => (
-          <div key={s} className="flex items-center gap-3">
-            <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold transition-all ${
+          <div key={s} className="flex items-center gap-2 sm:gap-3">
+            <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center text-sm font-bold transition-all flex-shrink-0 ${
               s < step ? "bg-[#111111] dark:bg-white text-white dark:text-black" :
               s === step ? "bg-[#111111] dark:bg-white text-white dark:text-black ring-4 ring-[#111111]/20 dark:ring-white/20" :
-              "bg-[#f0f0f0] dark:bg-[#222] text-[#99]"
+              "bg-[#f0f0f0] dark:bg-[#222] text-[#999]"
             }`}>
               {s < step ? <PiCheck className="w-4 h-4" /> : s}
             </div>
-            {s < 3 && <div className={`w-16 h-0.5 transition-all ${s < step ? "bg-[#111111] dark:bg-white" : "bg-[#eeeeee] dark:bg-[#333]"}`} />}
+            {s < TOTAL_STEPS && <div className={`w-8 sm:w-16 h-0.5 transition-all ${s < step ? "bg-[#111111] dark:bg-white" : "bg-[#eeeeee] dark:bg-[#333]"}`} />}
           </div>
         ))}
       </div>
 
-      <div className="w-full max-w-lg">
+      <div className="w-full sm:max-w-lg">
         {/* STEP 1 — Identity */}
         {step === 1 && (
-          <div className="bg-[#f9fafb] dark:bg-[#0a0a0a] border border-[#eeeeee] dark:border-[#222] rounded-[2.5rem] p-10 shadow-sm">
-            <h1 className="text-3xl font-serif mb-2 text-center">Tu identidad digital</h1>
-            <p className="text-[#555555] dark:text-[#a1a1aa] text-sm text-center mb-8">Elige cómo te verá el mundo</p>
+          <div className="bg-[#f9fafb] dark:bg-[#0a0a0a] border border-[#eeeeee] dark:border-[#222] rounded-[1.75rem] sm:rounded-[2.5rem] p-6 sm:p-10 shadow-sm">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mb-2 text-center">Reclama tu espacio</h1>
+            <p className="text-[#555555] dark:text-[#a1a1aa] text-sm text-center mb-6 sm:mb-8">Elige cómo te verá el mundo</p>
 
             {/* Avatar */}
-            <div className="flex flex-col items-center mb-8">
+            <div className="flex flex-col items-center mb-6 sm:mb-8">
               <label className="relative cursor-pointer group">
                 <div className="w-24 h-24 rounded-full overflow-hidden bg-[#eeeeee] dark:bg-[#222] border-2 border-[#eeeeee] dark:border-[#333]">
                   {(avatarPreview || avatarUrl) ? (
@@ -227,27 +253,27 @@ export default function OnboardingPage() {
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
                   placeholder="Nombre Apellido"
-                  className="w-full bg-white dark:bg-[#111] border border-[#eeeeee] dark:border-[#333] rounded-2xl py-4 px-5 text-[#111111] dark:text-white focus:outline-none focus:border-[#111111] dark:focus:border-white transition-all font-medium"
+                  className="w-full bg-white dark:bg-[#111] border border-[#eeeeee] dark:border-[#333] rounded-2xl py-4 px-5 text-[#111111] dark:text-white focus:outline-none focus:border-[#111111] dark:focus:border-white transition-all font-medium text-base"
                 />
               </div>
 
               {/* Username */}
               <div>
                 <label className="block text-xs font-bold uppercase tracking-widest text-[#999] mb-2">Tu username</label>
-                <div className="relative">
-                  <span className="absolute left-5 top-1/2 -translate-y-1/2 text-sm font-bold text-[#999]">bioly.space/</span>
+                <div className={`flex items-center bg-white dark:bg-[#111] border rounded-2xl pl-4 sm:pl-5 pr-4 transition-all ${
+                  usernameStatus === "available" ? "border-emerald-400 dark:border-emerald-500" :
+                  usernameStatus === "taken" || usernameStatus === "reserved" ? "border-red-400" :
+                  "border-[#eeeeee] dark:border-[#333] focus-within:border-[#111111] dark:focus-within:border-white"
+                }`}>
+                  <span className="text-sm font-bold text-[#999] flex-shrink-0 select-none">bioly.space/</span>
                   <input
                     type="text"
                     value={username}
                     onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ""))}
-                    placeholder="tususername"
-                    className={`w-full bg-white dark:bg-[#111] border rounded-2xl py-4 pl-[110px] pr-12 text-[#111111] dark:text-white focus:outline-none transition-all font-bold ${
-                      usernameStatus === "available" ? "border-emerald-400 dark:border-emerald-500" :
-                      usernameStatus === "taken" || usernameStatus === "reserved" ? "border-red-400" :
-                      "border-[#eeeeee] dark:border-[#333] focus:border-[#111111] dark:focus:border-white"
-                    }`}
+                    placeholder="usuario"
+                    className="min-w-0 flex-1 bg-transparent py-4 pl-0.5 pr-2 text-[#111111] dark:text-white focus:outline-none font-bold text-sm"
                   />
-                  <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                  <div className="flex-shrink-0">
                     {usernameStatus === "checking" && <PiSpinner className="w-4 h-4 animate-spin text-[#999]" />}
                     {usernameStatus === "available" && <PiCheck className="w-4 h-4 text-emerald-500" />}
                     {(usernameStatus === "taken" || usernameStatus === "reserved") && (
@@ -260,6 +286,7 @@ export default function OnboardingPage() {
                 {usernameStatus === "available" && <p className="mt-1.5 text-xs text-emerald-500 font-medium ml-1">✓ Disponible</p>}
                 {usernameStatus === "taken" && <p className="mt-1.5 text-xs text-red-500 font-medium ml-1">Este username ya está en uso</p>}
                 {usernameStatus === "reserved" && <p className="mt-1.5 text-xs text-red-500 font-medium ml-1">Este username está reservado</p>}
+                {username.length > 0 && username.length < 3 && <p className="mt-1.5 text-xs text-[#999] font-medium ml-1">Mínimo 3 caracteres</p>}
               </div>
             </div>
 
@@ -275,12 +302,12 @@ export default function OnboardingPage() {
 
         {/* STEP 2 — First Links */}
         {step === 2 && (
-          <div className="bg-[#f9fafb] dark:bg-[#0a0a0a] border border-[#eeeeee] dark:border-[#222] rounded-[2.5rem] p-10 shadow-sm">
-            <h1 className="text-3xl font-serif mb-2 text-center">Añade tus links</h1>
-            <p className="text-[#555555] dark:text-[#a1a1aa] text-sm text-center mb-8">Puedes saltarte esto y hacerlo después</p>
+          <div className="bg-[#f9fafb] dark:bg-[#0a0a0a] border border-[#eeeeee] dark:border-[#222] rounded-[1.75rem] sm:rounded-[2.5rem] p-6 sm:p-10 shadow-sm">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mb-2 text-center">Añade tus links</h1>
+            <p className="text-[#555555] dark:text-[#a1a1aa] text-sm text-center mb-6 sm:mb-8">Puedes saltarte esto y hacerlo después</p>
 
             {/* Platform selector */}
-            <div className="grid grid-cols-4 gap-2 mb-6">
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 mb-6">
               {QUICK_PLATFORMS.map((p) => (
                 <button
                   key={p.id}
@@ -300,7 +327,7 @@ export default function OnboardingPage() {
             {/* Handle input */}
             <div className="flex gap-3 mb-4">
               <div className="flex-1 relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xs font-bold text-[#99]">@</span>
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xs font-bold text-[#999]">@</span>
                 <input
                   type="text"
                   value={handle}
@@ -313,7 +340,7 @@ export default function OnboardingPage() {
               <button
                 onClick={addLink}
                 disabled={!handle.trim()}
-                className="bg-[#111111] dark:bg-white text-white dark:text-black px-5 rounded-2xl font-bold text-sm hover:opacity-90 transition-opacity disabled:opacity-30 cursor-pointer"
+                className="bg-[#111111] dark:bg-white text-white dark:text-black px-5 rounded-2xl font-bold text-sm hover:opacity-90 transition-opacity disabled:opacity-30 cursor-pointer flex-shrink-0"
               >
                 Añadir
               </button>
@@ -326,7 +353,7 @@ export default function OnboardingPage() {
                   <div key={i} className="flex items-center gap-3 bg-white dark:bg-[#111] border border-[#eeeeee] dark:border-[#222] rounded-2xl p-3">
                     <l.platform.icon className="w-5 h-5 flex-shrink-0" style={{ color: l.platform.color }} />
                     <span className="flex-1 text-sm font-medium truncate">{l.url}</span>
-                    <button onClick={() => removeLink(i)} className="text-[#99] hover:text-red-500 transition-colors p-1 cursor-pointer">
+                    <button onClick={() => removeLink(i)} className="text-[#999] hover:text-red-500 transition-colors p-1 cursor-pointer">
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                     </button>
                   </div>
@@ -335,75 +362,71 @@ export default function OnboardingPage() {
             )}
 
             <div className="flex gap-3 mt-6">
-              <button onClick={() => setStep(1)} className="flex-1 border border-[#eeeeee] dark:border-[#333] py-4 rounded-2xl font-semibold text-[#555] hover:border-[#111] dark:hover:border-white transition-colors cursor-pointer">
-                Atrás
+              <button onClick={() => setStep(1)} className="flex-1 border border-[#eeeeee] dark:border-[#333] py-4 rounded-2xl font-semibold text-[#555] hover:border-[#111] dark:hover:border-white transition-colors cursor-pointer flex items-center justify-center gap-2">
+                <PiArrowLeft className="w-4 h-4" /> Atrás
               </button>
               <button onClick={() => setStep(3)} className="flex-[2] bg-[#111111] dark:bg-white text-white dark:text-black py-4 rounded-2xl font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity cursor-pointer">
                 {addedLinks.length === 0 ? "Saltar por ahora" : "Siguiente"} <PiArrowRight className="w-5 h-5" />
               </button>
             </div>
+
+            <button
+              onClick={handleSkipAll}
+              disabled={loading}
+              className="w-full mt-3 py-3 rounded-2xl font-semibold text-sm text-[#999] hover:text-[#111111] dark:hover:text-white transition-colors disabled:opacity-30 cursor-pointer flex items-center justify-center gap-2"
+            >
+              {loading ? <PiSpinner className="w-4 h-4 animate-spin" /> : <PiSkipForward className="w-4 h-4" />}
+              Omitir y usar la configuración predeterminada
+            </button>
           </div>
         )}
 
         {/* STEP 3 — Appearance */}
         {step === 3 && (
-          <div className="bg-[#f9fafb] dark:bg-[#0a0a0a] border border-[#eeeeee] dark:border-[#222] rounded-[2.5rem] p-10 shadow-sm">
-            <h1 className="text-3xl font-serif mb-2 text-center">Tu apariencia</h1>
-            <p className="text-[#555555] dark:text-[#a1a1aa] text-sm text-center mb-8">Elige el color de tu espacio digital</p>
+          <div className="bg-[#f9fafb] dark:bg-[#0a0a0a] border border-[#eeeeee] dark:border-[#222] rounded-[1.75rem] sm:rounded-[2.5rem] p-6 sm:p-10 shadow-sm">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mb-2 text-center">Elige tu estilo</h1>
+            <p className="text-[#555555] dark:text-[#a1a1aa] text-sm text-center mb-6 sm:mb-8">Podrás cambiarlo cuando quieras desde tu panel</p>
 
-            {/* Mini preview */}
-            <div className="rounded-3xl overflow-hidden border border-[#eeeeee] dark:border-[#222] mb-8 bg-white dark:bg-[#0a0a0a]">
-              <div className="h-20 transition-colors duration-300" style={{ backgroundColor: themeColor }} />
-              <div className="p-5 text-center -mt-8">
-                <div className="w-16 h-16 mx-auto rounded-full border-4 border-white dark:border-[#0a0a0a] overflow-hidden bg-[#eeeeee] mb-3">
-                  {(avatarPreview || avatarUrl) ? (
-                    <img src={avatarPreview || avatarUrl!} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-xl font-bold text-[#999]">
-                      {displayName.charAt(0)}
-                    </div>
-                  )}
-                </div>
-                <p className="font-serif text-lg font-bold">{displayName}</p>
-                <p className="text-xs text-[#999] mt-1">bioly.space/{username}</p>
-                {addedLinks.length > 0 && (
-                  <div className="mt-4 space-y-2">
-                    {addedLinks.slice(0, 2).map((l, i) => (
-                      <div key={i} className="flex items-center gap-2 px-4 py-2.5 bg-[#f9fafb] dark:bg-[#111] border border-[#eeeeee] dark:border-[#222] rounded-2xl text-left">
-                        <l.platform.icon className="w-4 h-4" style={{ color: l.platform.color }} />
-                        <span className="text-xs font-semibold">{l.platform.name}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Color picker */}
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-widest text-[#99] mb-3">Color del tema</label>
-              <div className="flex items-center gap-3 flex-wrap">
-                {THEME_COLORS.map((c) => (
+            {/* Template gallery */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-8">
+              {ONBOARDING_TEMPLATES.map((t) => {
+                const isSelected = selectedTemplate.id === t.id;
+                const isLight = t.background_type === "solid" && ["#fcfcfc", "#fafafa", "#fdf4ff", "#e0f2fe"].includes(t.background_value);
+                return (
                   <button
-                    key={c}
-                    onClick={() => setThemeColor(c)}
-                    className={`w-9 h-9 rounded-full transition-all cursor-pointer ${themeColor === c ? "ring-2 ring-offset-2 ring-[#111] dark:ring-white scale-110" : "opacity-70 hover:opacity-100 hover:scale-105"}`}
-                    style={{ backgroundColor: c }}
-                  />
-                ))}
-                <input
-                  type="color"
-                  value={themeColor}
-                  onChange={(e) => setThemeColor(e.target.value)}
-                  className="w-9 h-9 rounded-full border-none p-0 overflow-hidden cursor-pointer bg-transparent"
-                  title="Color personalizado"
-                />
-              </div>
+                    key={t.id}
+                    onClick={() => setSelectedTemplate(t)}
+                    className={`relative rounded-2xl overflow-hidden border-2 transition-all cursor-pointer aspect-[3/4] flex flex-col items-center justify-center gap-2 ${
+                      isSelected ? "border-[#111111] dark:border-white ring-2 ring-[#111111]/20 dark:ring-white/20 scale-[1.02]" : "border-transparent hover:scale-[1.02]"
+                    }`}
+                    style={templatePreviewStyle(t)}
+                  >
+                    {isSelected && (
+                      <div className="absolute top-2 right-2 w-5 h-5 bg-[#111111] dark:bg-white rounded-full flex items-center justify-center">
+                        <PiCheck className="w-3 h-3 text-white dark:text-black" />
+                      </div>
+                    )}
+                    <div
+                      className="w-8 h-8 rounded-full border-2"
+                      style={{ backgroundColor: t.theme_color, borderColor: isLight ? "rgba(0,0,0,0.15)" : "rgba(255,255,255,0.4)" }}
+                    />
+                    <span
+                      className="text-[10px] font-bold uppercase tracking-wide px-2 py-1 rounded-full"
+                      style={{
+                        color: isLight || t.background_type === "image_fade" ? "#fff" : "#111",
+                        backgroundColor: isLight || t.background_type === "image_fade" ? "rgba(0,0,0,0.5)" : "rgba(255,255,255,0.6)",
+                      }}
+                    >
+                      {t.name}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
 
-            <div className="flex gap-3 mt-8">
-              <button onClick={() => setStep(2)} className="flex-1 border border-[#eeeeee] dark:border-[#333] py-4 rounded-2xl font-semibold text-[#555] hover:border-[#111] dark:hover:white transition-colors cursor-pointer">
-                Atrás
+            <div className="flex gap-3">
+              <button onClick={() => setStep(2)} className="flex-1 border border-[#eeeeee] dark:border-[#333] py-4 rounded-2xl font-semibold text-[#555] hover:border-[#111] dark:hover:border-white transition-colors cursor-pointer flex items-center justify-center gap-2">
+                <PiArrowLeft className="w-4 h-4" /> Atrás
               </button>
               <button
                 onClick={handleFinish}

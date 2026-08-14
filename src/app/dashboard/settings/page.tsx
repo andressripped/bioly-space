@@ -97,13 +97,13 @@ export default async function SettingsPage() {
             <p className="text-sm text-[#999999] italic">Las preferencias de notificaciones estarán disponibles pronto.</p>
           </div>
 
-          {/* Zona de peligro */}
-          <div className="border border-red-200 dark:border-red-900/30 rounded-3xl p-8">
-            <h2 className="text-xl font-bold mb-2 text-red-600 dark:text-red-400">Zona de peligro</h2>
-            <p className="text-sm text-[#555555] dark:text-[#a1a1aa] mb-6">Estas acciones son irreversibles. Procede con cuidado.</p>
+          {/* Sesión */}
+          <div className="border border-[#eeeeee] dark:border-[#222] rounded-3xl p-8">
+            <h2 className="text-xl font-bold mb-2">Sesión</h2>
+            <p className="text-sm text-[#555555] dark:text-[#a1a1aa] mb-6">Cierra sesión en este dispositivo.</p>
             <Link
               href="/auth/signout"
-              className="inline-flex items-center gap-2 border border-[#eeeeee] dark:border-[#333] px-5 py-3 rounded-xl text-sm font-semibold text-[#555555] dark:text-[#a1a1aa] hover:border-red-300 hover:text-red-500 transition-all cursor-pointer"
+              className="inline-flex items-center gap-2 border border-[#eeeeee] dark:border-[#333] px-5 py-3 rounded-xl text-sm font-semibold text-[#555555] dark:text-[#a1a1aa] hover:border-[#111] hover:text-[#111111] dark:hover:border-white dark:hover:text-white transition-all cursor-pointer"
             >
               <PiSignOut className="w-4 h-4" />
               Cerrar sesión
