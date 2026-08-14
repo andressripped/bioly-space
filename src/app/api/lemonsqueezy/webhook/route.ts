@@ -18,10 +18,14 @@ export async function POST(req: Request) {
 
     // 1. Verificar firma
     const hmac = crypto.createHmac("sha256", secret);
-    const digest = hmac.update(body).digest("hex");
+    const digest = Buffer.from(hmac.update(body).digest("hex"), "utf8");
+    const signatureBuffer = Buffer.from(signature, "utf8");
 
-    if (signature !== digest) {
-      console.error("❌ Firma inválida:", { recibido: signature, calculado: digest });
+    if (
+      signatureBuffer.length !== digest.length ||
+      !crypto.timingSafeEqual(signatureBuffer, digest)
+    ) {
+      console.error("❌ Firma de webhook inválida");
       return new Response("Invalid signature", { status: 400 });
     }
 

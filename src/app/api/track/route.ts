@@ -57,6 +57,18 @@ export async function POST(request: Request) {
       supabase = await createClient();
     }
 
+    // Validate profile_id refers to a real profile before inserting (service role bypasses RLS,
+    // so without this check anyone could spam analytics rows for arbitrary/non-existent profiles).
+    const { data: profileExists } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("id", profile_id)
+      .single();
+
+    if (!profileExists) {
+      return NextResponse.json({ error: "Invalid profile_id" }, { status: 400 });
+    }
+
     const { error } = await supabase.from("analytics").insert({
       profile_id,
       link_id: link_id || null,

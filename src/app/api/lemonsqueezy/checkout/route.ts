@@ -20,7 +20,7 @@ export async function POST(req: Request) {
 
     setupLemonSqueezy();
     const storeId = process.env.LEMONSQUEEZY_STORE_ID;
-    console.log("Iniciando checkout LS:", { storeId, variantId, tier, userEmail: user.email });
+    console.log("Iniciando checkout LS:", { storeId, variantId, tier });
 
     if (!storeId) {
       console.error("Error: Falta LEMONSQUEEZY_STORE_ID");
@@ -54,7 +54,6 @@ export async function POST(req: Request) {
     }
 
     const checkoutUrl = data.data.attributes.url;
-    console.log("Checkout creado exitosamente:", checkoutUrl);
     return NextResponse.json({ url: checkoutUrl });
   } catch (error: any) {
     console.error("[LEMONSQUEEZY_CHECKOUT_ERROR]", error);

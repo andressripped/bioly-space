@@ -6,17 +6,25 @@ export default async function AdminPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user || user.email !== "andreslit6@gmail.com") {
+  if (!user) {
     redirect("/dashboard");
   }
 
-  // Fetch all profiles to manage
+  const { data: currentProfile } = await supabase
+    .from("profiles")
+    .select("is_admin")
+    .eq("id", user.id)
+    .single();
+
+  if (!currentProfile?.is_admin) {
+    redirect("/dashboard");
+  }
+
   // Nota: Para poder ver los emails de todos, tendríamos que tener acceso de superadmin en Supabase.
   // Como los perfiles no guardan el email por defecto, haremos un JOIN o aseguraremos que auth.users sea accesible.
   // Pero Supabase bloquea leer auth.users desde el cliente anon.
   // La mejor forma es que guardemos el email en profiles al momento de crear la cuenta.
-  
-  // Vamos a traer los perfiles
+
   const { data: profiles, error: profilesError } = await supabase
     .from("profiles")
     .select("*")
@@ -24,8 +32,6 @@ export default async function AdminPage() {
 
   if (profilesError) {
     console.error("Error al obtener perfiles en Admin:", profilesError);
-  } else {
-    console.log(`[Admin] Se encontraron ${profiles?.length || 0} perfiles.`);
   }
 
   return (
