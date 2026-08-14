@@ -872,15 +872,73 @@ export default function ProfileClient({ user }: { user: any }) {
           {/* Preview frame */}
           <div className="flex-1 flex items-center justify-center w-full pt-20 pb-10 px-4">
             <div
-              className={`transition-all duration-500 ease-in-out shadow-2xl overflow-hidden border border-black/5 flex flex-col relative
-                ${activeDevice === "desktop" ? "w-full max-w-2xl h-[600px] rounded-xl"              : ""}
-                ${activeDevice === "tablet"  ? "w-[500px] h-[700px] rounded-[3rem] border-[10px] border-[#111]" : ""}
-                ${activeDevice === "mobile"  ? "w-[320px] h-[640px] rounded-[3rem] border-[10px] border-[#111]" : ""}
+              key={activeDevice}
+              className={`flex flex-col relative animate-in fade-in zoom-in-95 duration-200
+                ${activeDevice === "desktop" ? "w-full max-w-3xl bg-[#e5e5e5] dark:bg-[#1a1a1a] rounded-t-xl rounded-b-md shadow-2xl overflow-hidden border border-black/10" : ""}
+                ${activeDevice === "tablet"  ? "w-[440px] bg-gradient-to-b from-[#e9e9ec] to-[#d8d8dc] dark:from-[#2a2a2e] dark:to-[#161618] rounded-[3rem] p-4 shadow-2xl ring-1 ring-black/10" : ""}
+                ${activeDevice === "mobile"  ? "w-[300px] bg-gradient-to-b from-[#3a3a3e] to-[#1c1c1e] rounded-[3.5rem] p-[14px] shadow-2xl ring-1 ring-black/40" : ""}
               `}
-              style={{
-                background: backgroundType === "gradient" ? backgroundValue : backgroundType === "solid" ? backgroundValue : "#000000",
-              }}
             >
+              {/* Desktop: browser chrome */}
+              {activeDevice === "desktop" && (
+                <div className="flex items-center gap-2 px-4 py-3 bg-[#e5e5e5] dark:bg-[#1a1a1a] flex-shrink-0">
+                  <div className="flex gap-1.5">
+                    <span className="w-3 h-3 rounded-full bg-[#ff5f57]" />
+                    <span className="w-3 h-3 rounded-full bg-[#febc2e]" />
+                    <span className="w-3 h-3 rounded-full bg-[#28c840]" />
+                  </div>
+                  <div className="flex-1 mx-4 bg-white dark:bg-[#0a0a0a] rounded-md px-3 py-1 text-xs text-[#666] dark:text-[#999] truncate text-center">
+                    bioly.space/{username || "usuario"}
+                  </div>
+                </div>
+              )}
+
+              {/* Tablet: front camera dot centered in top bezel */}
+              {activeDevice === "tablet" && (
+                <div className="flex justify-center py-2.5 flex-shrink-0">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#0a0a0a] ring-[3px] ring-black/5 dark:ring-white/5" />
+                </div>
+              )}
+
+              {/* Tablet: side buttons on bezel */}
+              {activeDevice === "tablet" && (
+                <>
+                  <span className="absolute -right-[3px] top-24 w-[3px] h-14 bg-[#b8b8bc] dark:bg-[#0a0a0a] rounded-r-sm" />
+                  <span className="absolute -top-[3px] right-14 w-10 h-[3px] bg-[#b8b8bc] dark:bg-[#0a0a0a] rounded-t-sm" />
+                </>
+              )}
+
+              {/* Mobile: side buttons on bezel */}
+              {activeDevice === "mobile" && (
+                <>
+                  <span className="absolute -left-[3px] top-24 w-[3px] h-8 bg-[#111] rounded-l-sm" />
+                  <span className="absolute -left-[3px] top-36 w-[3px] h-12 bg-[#111] rounded-l-sm" />
+                  <span className="absolute -left-[3px] top-52 w-[3px] h-12 bg-[#111] rounded-l-sm" />
+                  <span className="absolute -right-[3px] top-32 w-[3px] h-16 bg-[#111] rounded-r-sm" />
+                </>
+              )}
+
+              <div
+                className={`overflow-hidden relative flex flex-col ring-1 ring-black/40
+                  ${activeDevice === "desktop" ? "h-[560px]" : ""}
+                  ${activeDevice === "tablet"  ? "h-[580px] rounded-[1.75rem]" : ""}
+                  ${activeDevice === "mobile"  ? "h-[580px] rounded-[2.5rem]" : ""}
+                `}
+                style={{
+                  background: backgroundType === "gradient" ? backgroundValue : backgroundType === "solid" ? backgroundValue : "#000000",
+                }}
+              >
+              {/* Mobile: dynamic island overlay on the screen itself */}
+              {activeDevice === "mobile" && (
+                <div className="absolute top-2 left-1/2 -translate-x-1/2 w-24 h-7 bg-black rounded-full z-30 flex items-center justify-end pr-2">
+                  <span className="w-2 h-2 rounded-full bg-[#1a1a1a] ring-1 ring-white/10" />
+                </div>
+              )}
+
+              {/* Mobile: home indicator overlaid on top of the screen content, like a real iPhone */}
+              {activeDevice === "mobile" && (
+                <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-28 h-1 rounded-full bg-white/80 z-30 pointer-events-none" />
+              )}
               <div className={`flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden relative z-10 ${fontClass}`}>
                 {/* Banner */}
                 {backgroundType === "solid" && (
@@ -1009,6 +1067,7 @@ export default function ProfileClient({ user }: { user: any }) {
                     )}
                   </div>
                 </div>
+              </div>
               </div>
             </div>
           </div>

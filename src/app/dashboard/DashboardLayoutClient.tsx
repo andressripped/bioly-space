@@ -34,7 +34,7 @@ export default function DashboardLayoutClient({
     { href: "/dashboard/settings", icon: PiGear, label: "Ajustes" },
   ];
 
-  if (user?.email === "andreslit6@gmail.com") {
+  if (profile?.is_admin) {
     navItems.push({ href: "/admin", icon: PiCrown, label: "Admin" });
   }
 
@@ -164,7 +164,7 @@ export default function DashboardLayoutClient({
         </div>
 
         {/* Dynamic page content */}
-        <div className="flex-1 h-full min-w-0 relative">
+        <div className="flex-1 min-w-0 relative overflow-y-auto">
           {children}
         </div>
       </div>
