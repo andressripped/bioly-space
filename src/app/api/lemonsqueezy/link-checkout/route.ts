@@ -52,8 +52,8 @@ export async function POST(req: Request) {
           email: normalizedEmail,
           telegram_username: normalizedTelegram,
         },
-        custom_price: priceInCents,
       },
+      customPrice: priceInCents,
       checkoutOptions: {
         embed: false,
       },
