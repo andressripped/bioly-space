@@ -2,9 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import { PlatformIcon } from "@/components/PlatformIcon";
-import { PiShareNetwork, PiEnvelope, PiCheck, PiSpinner, PiEyeSlash } from "react-icons/pi";
+import { PiShareNetwork, PiEnvelope, PiCheck, PiSpinner, PiEyeSlash, PiLockKey } from "react-icons/pi";
 import { FONT_CLASSES } from "@/lib/fonts";
 import { renderWithAppleEmojis } from "@/utils/emoji";
+
+const UNLOCK_EMAIL_STORAGE_KEY = "bioly_unlock_email";
 
 // Helper function to safely extract hostname from document.referrer without crashing on non-standard custom URLs (e.g., android-app://...)
 const getSafeReferrer = () => {
@@ -39,6 +41,14 @@ export default function ProfileView({ profile, links }: ProfileViewProps) {
   const [subscribeMessage, setSubscribeMessage] = useState({ text: "", isError: false });
   const [activeSensitiveLink, setActiveSensitiveLink] = useState<any | null>(null);
 
+  // ── Paid / private links ──
+  const [unlockedLinkIds, setUnlockedLinkIds] = useState<Set<string>>(new Set());
+  const [paywallLink, setPaywallLink] = useState<any | null>(null);
+  const [unlockEmail, setUnlockEmail] = useState("");
+  const [unlockTelegram, setUnlockTelegram] = useState("");
+  const [unlockLoading, setUnlockLoading] = useState(false);
+  const [unlockError, setUnlockError] = useState("");
+
   // Resolve style classes from profile data
   const btnClass  = BUTTON_STYLE_MAP[profile.button_style ?? "rounded"] ?? "rounded-2xl";
   const isOutline = (profile.button_style ?? "rounded") === "outline";
@@ -66,6 +76,89 @@ export default function ProfileView({ profile, links }: ProfileViewProps) {
       }),
     }).catch(() => {});
   }, [profile.id]);
+
+  // Check which paid links the returning visitor already unlocked (by remembered email)
+  useEffect(() => {
+    const paidLinks = links.filter((l) => l.is_paid);
+    if (paidLinks.length === 0) return;
+
+    const params = new URLSearchParams(window.location.search);
+    const justUnlockedId = params.get("unlock_link");
+
+    const storedEmail = localStorage.getItem(UNLOCK_EMAIL_STORAGE_KEY);
+    if (!storedEmail) return;
+
+    (async () => {
+      const results = await Promise.all(
+        paidLinks.map(async (l) => {
+          try {
+            const res = await fetch("/api/links/check-access", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ link_id: l.id, email: storedEmail }),
+            });
+            const data = await res.json();
+            return data.unlocked ? l.id : null;
+          } catch {
+            return null;
+          }
+        })
+      );
+      setUnlockedLinkIds(new Set(results.filter(Boolean) as string[]));
+
+      if (justUnlockedId) {
+        params.delete("unlock_link");
+        const newUrl = window.location.pathname + (params.toString() ? `?${params.toString()}` : "");
+        window.history.replaceState({}, "", newUrl);
+      }
+    })();
+  }, [links]);
+
+  const openPaywall = (link: any) => {
+    setUnlockError("");
+    setUnlockEmail(localStorage.getItem(UNLOCK_EMAIL_STORAGE_KEY) || "");
+    setUnlockTelegram("");
+    setPaywallLink(link);
+  };
+
+  const handleUnlock = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!paywallLink) return;
+    setUnlockLoading(true);
+    setUnlockError("");
+    try {
+      const normalizedEmail = unlockEmail.toLowerCase().trim();
+
+      const checkRes = await fetch("/api/links/check-access", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ link_id: paywallLink.id, email: normalizedEmail }),
+      });
+      const checkData = await checkRes.json();
+
+      if (checkData.unlocked) {
+        localStorage.setItem(UNLOCK_EMAIL_STORAGE_KEY, normalizedEmail);
+        setUnlockedLinkIds((prev) => new Set(prev).add(paywallLink.id));
+        setPaywallLink(null);
+        return;
+      }
+
+      localStorage.setItem(UNLOCK_EMAIL_STORAGE_KEY, normalizedEmail);
+      const checkoutRes = await fetch("/api/lemonsqueezy/link-checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ link_id: paywallLink.id, email: normalizedEmail, telegram_username: unlockTelegram }),
+      });
+      const checkoutData = await checkoutRes.json();
+      if (!checkoutRes.ok || !checkoutData.url) {
+        throw new Error(checkoutData.error || "No se pudo iniciar el pago");
+      }
+      window.location.href = checkoutData.url;
+    } catch (err: any) {
+      setUnlockError(err.message || "Ocurrió un error, intenta de nuevo");
+      setUnlockLoading(false);
+    }
+  };
 
   const handleLinkClick = (link: any) => {
     fetch("/api/track", {
@@ -218,6 +311,31 @@ export default function ProfileView({ profile, links }: ProfileViewProps) {
         <div className={`w-full ${isCard ? "grid grid-cols-2 sm:grid-cols-2 gap-4" : "space-y-3"}`}>
           {mainLinks.map((link) => {
             const isSensitive = ADULT_DOMAINS.some(domain => link.url?.toLowerCase().includes(domain));
+            const isLocked = link.is_paid && !unlockedLinkIds.has(link.id);
+
+            if (isLocked) {
+              return (
+                <button
+                  key={link.id}
+                  type="button"
+                  onClick={() => openPaywall(link)}
+                  className={
+                    isCard
+                      ? `group relative aspect-[4/5] w-full overflow-hidden flex flex-col items-center justify-center gap-2 p-4 text-center transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] ${btnClass} border-2 border-dashed border-black/10 bg-black/[0.02]`
+                      : `w-full flex items-center gap-4 px-5 py-4 transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.98] ${btnClass} border-2 border-dashed border-black/10 bg-black/[0.02]`
+                  }
+                >
+                  <div className="w-9 h-9 flex items-center justify-center rounded-xl flex-shrink-0 bg-black/5">
+                    <PiLockKey className="w-5 h-5" />
+                  </div>
+                  <span className={`font-bold text-base ${isCard ? "" : "flex-1 text-left"}`}>{link.title}</span>
+                  <span className="text-sm font-bold px-3 py-1.5 rounded-full bg-black/5 flex-shrink-0">
+                    ${Number(link.price_usd).toFixed(2)} USD/mes
+                  </span>
+                </button>
+              );
+            }
+
             return (
               <a
                 key={link.id}
@@ -380,6 +498,66 @@ export default function ProfileView({ profile, links }: ProfileViewProps) {
               </button>
             </div>
 
+          </div>
+        </div>
+      )}
+
+      {/* ── PAYWALL: unlock a private link ── */}
+      {paywallLink && (
+        <div className="fixed inset-0 z-[150] flex flex-col items-center justify-center p-6 bg-black/60 backdrop-blur-xl animate-in fade-in duration-300">
+          <div className="w-full max-w-sm bg-white rounded-3xl p-8 shadow-2xl">
+            <div className="w-14 h-14 mx-auto mb-5 bg-black/5 rounded-full flex items-center justify-center">
+              <PiLockKey className="w-6 h-6 text-[#111111]" />
+            </div>
+
+            <h2 className="text-lg font-bold text-[#111111] text-center mb-1">{paywallLink.title}</h2>
+            <p className="text-sm text-[#666666] text-center mb-6">
+              Suscripción mensual de <span className="font-bold text-[#111111]">${Number(paywallLink.price_usd).toFixed(2)} USD/mes</span> — se renueva automáticamente, cancela cuando quieras.
+            </p>
+
+            <form onSubmit={handleUnlock} className="space-y-3">
+              <input
+                type="email"
+                required
+                placeholder="tu@email.com"
+                value={unlockEmail}
+                onChange={(e) => setUnlockEmail(e.target.value)}
+                className="w-full bg-[#f9fafb] border border-[#eeeeee] rounded-xl px-4 py-3 text-sm text-[#111111] focus:outline-none focus:border-[#111111] transition-colors"
+              />
+              <div>
+                <input
+                  type="text"
+                  required
+                  placeholder="Tu nombre en Telegram"
+                  value={unlockTelegram}
+                  onChange={(e) => setUnlockTelegram(e.target.value)}
+                  className="w-full bg-[#f9fafb] border border-[#eeeeee] rounded-xl px-4 py-3 text-sm text-[#111111] focus:outline-none focus:border-[#111111] transition-colors"
+                />
+                <p className="mt-1.5 text-[10px] text-[#999999] leading-relaxed">
+                  Lo usamos para aceptar tu solicitud al grupo — pon el nombre con el que apareces en Telegram.
+                </p>
+              </div>
+              {unlockError && <p className="text-xs text-red-500 font-medium">{unlockError}</p>}
+              <button
+                type="submit"
+                disabled={unlockLoading}
+                className="w-full bg-[#111111] text-white py-3.5 rounded-xl font-bold text-sm hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {unlockLoading ? <PiSpinner className="w-4 h-4 animate-spin" /> : null}
+                {unlockLoading ? "Verificando..." : `Suscribirme por $${Number(paywallLink.price_usd).toFixed(2)} USD/mes`}
+              </button>
+              <button
+                type="button"
+                onClick={() => setPaywallLink(null)}
+                className="w-full py-2.5 text-xs font-semibold text-[#999999] hover:text-[#111111] transition-colors"
+              >
+                Cancelar
+              </button>
+            </form>
+
+            <p className="mt-4 text-[10px] text-[#999999] text-center leading-relaxed">
+              Si ya tienes una suscripción activa con este email, se desbloqueará al instante.
+            </p>
           </div>
         </div>
       )}

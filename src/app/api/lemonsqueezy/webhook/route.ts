@@ -35,7 +35,66 @@ export async function POST(req: Request) {
 
     console.log(`📥 Evento: ${eventName}`, { customData });
 
-    // 2. Procesar evento de compra/suscripción
+    // 2a. Suscripción mensual a un link privado
+    const LINK_SUBSCRIPTION_EVENTS = [
+      "subscription_created",
+      "subscription_updated",
+      "subscription_payment_success",
+      "subscription_cancelled",
+      "subscription_expired",
+      "subscription_payment_failed",
+    ];
+    if (LINK_SUBSCRIPTION_EVENTS.includes(eventName) && customData?.type === "link_subscription") {
+      const linkId = customData?.link_id;
+      const email = customData?.email;
+      const telegramUsername = customData?.telegram_username || null;
+
+      if (!linkId || !email) {
+        console.error("⚠️ Webhook de link_subscription sin link_id o email:", customData);
+        return new Response("Missing custom data", { status: 200 });
+      }
+
+      const attrs = payload.data?.attributes || {};
+      const lsStatus = attrs.status as string | undefined; // active | on_trial | past_due | cancelled | unpaid | expired | paused
+      const periodEnd = attrs.ends_at || attrs.renews_at || null;
+      const subscriptionId = payload.data?.id || null;
+
+      // Colapsamos los estados de Lemon Squeezy a nuestro propio set:
+      // 'active'    → tiene acceso ahora mismo (incluye "cancelled pero aún dentro del período pagado")
+      // 'expired'   → sin acceso
+      let ourStatus: "active" | "expired" = "expired";
+      if (lsStatus === "active" || lsStatus === "on_trial" || lsStatus === "cancelled") {
+        ourStatus = "active";
+      }
+      if (eventName === "subscription_expired" || lsStatus === "expired" || lsStatus === "unpaid") {
+        ourStatus = "expired";
+      }
+
+      const { error: subError } = await supabaseAdmin
+        .from("link_subscriptions")
+        .upsert(
+          {
+            link_id: linkId,
+            email: String(email).toLowerCase().trim(),
+            telegram_username: telegramUsername,
+            status: ourStatus,
+            lemonsqueezy_subscription_id: subscriptionId,
+            current_period_end: periodEnd,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "link_id,email" }
+        );
+
+      if (subError) {
+        console.error("❌ Error registrando link_subscription:", subError);
+        return new Response("Database Error", { status: 500 });
+      }
+
+      console.log(`🔁 Suscripción de link ${linkId} para ${email}: ${ourStatus} (LS status: ${lsStatus})`);
+      return new Response("OK", { status: 200 });
+    }
+
+    // 2b. Procesar evento de compra/suscripción de planes (Pro/Business)
     if (eventName === "order_created" || eventName === "subscription_created" || eventName === "subscription_payment_success") {
       const userId = customData?.user_id;
       const tier = customData?.tier;

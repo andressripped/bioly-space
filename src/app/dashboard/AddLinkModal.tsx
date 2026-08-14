@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useMemo, useRef, useEffect } from "react";
-import { 
-  PiX, PiLink, PiTextAa, PiGlobe, PiMagnifyingGlass, PiPlus, PiSpinner, PiImageSquare
+import {
+  PiX, PiLink, PiTextAa, PiGlobe, PiMagnifyingGlass, PiPlus, PiSpinner, PiImageSquare, PiLockKey, PiCurrencyDollar, PiUsers, PiCaretDown, PiCaretUp
 } from "react-icons/pi";
 import { 
   SiInstagram, SiYoutube, SiTiktok, SiX, SiFacebook, 
@@ -55,18 +55,42 @@ export function AddLinkModal({ isOpen, onClose, onSuccess, editLink }: AddLinkMo
   const [searchTerm, setSearchTerm] = useState("");
   const [isSocial, setIsSocial] = useState(false);
   const [thumbnailUrl, setThumbnailUrl] = useState("");
+  const [isPaid, setIsPaid] = useState(false);
+  const [priceUsd, setPriceUsd] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
+  const [showSubscribers, setShowSubscribers] = useState(false);
+  const [subscribers, setSubscribers] = useState<any[] | null>(null);
+  const [loadingSubscribers, setLoadingSubscribers] = useState(false);
+
   const supabase = createClient();
+
+  const loadSubscribers = async () => {
+    if (!editLink) return;
+    setLoadingSubscribers(true);
+    try {
+      const res = await fetch(`/api/links/subscribers?link_id=${editLink.id}`);
+      const data = await res.json();
+      setSubscribers(data.subscribers || []);
+    } catch {
+      setSubscribers([]);
+    } finally {
+      setLoadingSubscribers(false);
+    }
+  };
 
   useEffect(() => {
     if (isOpen) {
+      setShowSubscribers(false);
+      setSubscribers(null);
       if (editLink) {
         setTitle(editLink.title || "");
         setIsSocial(editLink.is_social || false);
         setThumbnailUrl(editLink.thumbnail_url || "");
-        
+        setIsPaid(editLink.is_paid || false);
+        setPriceUsd(editLink.price_usd != null ? String(editLink.price_usd) : "");
+
         const platform = PLATFORMS.find(p => p.id === editLink.icon) || PLATFORMS[0];
         setSelectedPlatform(platform);
 
@@ -84,6 +108,8 @@ export function AddLinkModal({ isOpen, onClose, onSuccess, editLink }: AddLinkMo
         setHandle("");
         setIsSocial(false);
         setThumbnailUrl("");
+        setIsPaid(false);
+        setPriceUsd("");
       }
       setError(null);
     }
@@ -137,6 +163,11 @@ export function AddLinkModal({ isOpen, onClose, onSuccess, editLink }: AddLinkMo
 
       const finalTitle = title.trim() || selectedPlatform.name;
 
+      if (isPaid && (!priceUsd || Number(priceUsd) < 0.5)) {
+        throw new Error("El precio mínimo para un link privado es $0.50 USD");
+      }
+      const finalPriceUsd = isPaid ? Number(priceUsd) : null;
+
       if (editLink) {
         const { error: updateError } = await supabase
           .from("links")
@@ -146,6 +177,8 @@ export function AddLinkModal({ isOpen, onClose, onSuccess, editLink }: AddLinkMo
             icon: selectedPlatform.id,
             is_social: isSocial,
             thumbnail_url: thumbnailUrl || null,
+            is_paid: isPaid,
+            price_usd: finalPriceUsd,
           })
           .eq("id", editLink.id);
 
@@ -172,6 +205,8 @@ export function AddLinkModal({ isOpen, onClose, onSuccess, editLink }: AddLinkMo
               position: nextPosition,
               is_social: isSocial,
               thumbnail_url: thumbnailUrl || null,
+              is_paid: isPaid,
+              price_usd: finalPriceUsd,
             }
           ]);
 
@@ -323,6 +358,90 @@ export function AddLinkModal({ isOpen, onClose, onSuccess, editLink }: AddLinkMo
                     </button>
                     <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleImageUpload} />
                   </div>
+                </div>
+              )}
+
+              <label className="flex items-center gap-3 p-4 border border-[#eeeeee] dark:border-[#222] rounded-2xl cursor-pointer hover:bg-gray-50 dark:hover:bg-[#111] transition-colors">
+                <input
+                  type="checkbox"
+                  checked={isPaid}
+                  onChange={(e) => setIsPaid(e.target.checked)}
+                  className="w-5 h-5 rounded border-gray-300 text-[#111111] focus:ring-[#111111]"
+                />
+                <PiLockKey className="w-5 h-5 text-[#999999] flex-shrink-0" />
+                <div>
+                  <span className="block text-sm font-bold text-[#111111] dark:text-white">Link privado (suscripción mensual)</span>
+                  <span className="block text-xs text-[#999999]">Tus seguidores pagan cada mes para mantener el acceso. Ideal para grupos de Telegram/Discord.</span>
+                </div>
+              </label>
+
+              {isPaid && (
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-widest text-[#999999] mb-2 ml-1">
+                    Precio mensual (USD)
+                  </label>
+                  <div className="relative">
+                    <PiCurrencyDollar className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#999999]" />
+                    <input
+                      type="number"
+                      min="0.5"
+                      step="0.5"
+                      required={isPaid}
+                      value={priceUsd}
+                      onChange={(e) => setPriceUsd(e.target.value)}
+                      className="w-full bg-[#f9fafb] dark:bg-[#111] border border-[#eeeeee] dark:border-[#222] rounded-2xl py-4 pl-12 pr-16 text-[#111111] dark:text-white focus:outline-none focus:border-[#111111] dark:focus:border-white transition-all font-medium"
+                      placeholder="5.00"
+                    />
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-[#999999]">USD/mes</span>
+                  </div>
+                  <p className="mt-2 text-[10px] text-[#999999] font-medium ml-1">Mínimo $0.50 USD/mes. Al pagar, tus seguidores dejan su email y su nombre de Telegram para que sepas a quién agregar.</p>
+
+                  {editLink && (
+                    <div className="mt-4">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const next = !showSubscribers;
+                          setShowSubscribers(next);
+                          if (next && subscribers === null) loadSubscribers();
+                        }}
+                        className="w-full flex items-center justify-between p-4 border border-[#eeeeee] dark:border-[#222] rounded-2xl hover:bg-gray-50 dark:hover:bg-[#111] transition-colors cursor-pointer"
+                      >
+                        <span className="flex items-center gap-2 text-sm font-bold text-[#111111] dark:text-white">
+                          <PiUsers className="w-4 h-4" /> Ver suscriptores
+                        </span>
+                        {showSubscribers ? <PiCaretUp className="w-4 h-4 text-[#999999]" /> : <PiCaretDown className="w-4 h-4 text-[#999999]" />}
+                      </button>
+
+                      {showSubscribers && (
+                        <div className="mt-2 border border-[#eeeeee] dark:border-[#222] rounded-2xl overflow-hidden">
+                          {loadingSubscribers ? (
+                            <div className="p-6 flex justify-center">
+                              <PiSpinner className="w-5 h-5 animate-spin text-[#999999]" />
+                            </div>
+                          ) : subscribers && subscribers.length > 0 ? (
+                            <div className="divide-y divide-[#eeeeee] dark:divide-[#222] max-h-64 overflow-y-auto">
+                              {subscribers.map((s, i) => (
+                                <div key={i} className="p-3 flex items-center justify-between gap-3">
+                                  <div className="min-w-0">
+                                    <p className="text-sm font-semibold text-[#111111] dark:text-white truncate">{s.telegram_username || "(sin Telegram)"}</p>
+                                    <p className="text-xs text-[#999999] truncate">{s.email}</p>
+                                  </div>
+                                  <span className={`flex-shrink-0 text-[10px] font-bold uppercase px-2.5 py-1 rounded-full ${
+                                    s.status === "active" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                                  }`}>
+                                    {s.status === "active" ? "Activo" : "Vencido"}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="p-6 text-center text-sm text-[#999999]">Todavía no hay suscriptores.</p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
