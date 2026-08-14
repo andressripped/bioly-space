@@ -5,7 +5,7 @@ import { createClient as createAdminClient } from "@supabase/supabase-js";
 
 export async function POST(req: Request) {
   try {
-    const { link_id, email, telegram_username } = await req.json();
+    const { link_id, email, telegram_username, redirect_path } = await req.json();
 
     if (!link_id || !email || !/^\S+@\S+\.\S+$/.test(email)) {
       return NextResponse.json({ error: "Datos inválidos" }, { status: 400 });
@@ -41,6 +41,7 @@ export async function POST(req: Request) {
     }
 
     const origin = req.headers.get("origin") || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const safeRedirectPath = typeof redirect_path === "string" && redirect_path.startsWith("/") ? redirect_path : "/";
     const priceInCents = Math.round(Number(link.price_usd) * 100);
 
     const { data, error } = await createCheckout(storeId, variantId, {
@@ -59,7 +60,7 @@ export async function POST(req: Request) {
       },
       productOptions: {
         name: `Suscripción: ${link.title}`,
-        redirectUrl: `${origin}?unlock_link=${link_id}`,
+        redirectUrl: `${origin}${safeRedirectPath}?unlock_link=${link_id}`,
       },
     });
 

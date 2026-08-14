@@ -37,6 +37,7 @@ export async function POST(req: Request) {
 
     // 2a. Suscripción mensual a un link privado
     const LINK_SUBSCRIPTION_EVENTS = [
+      "order_created", // fired for the subscription's first invoice, before subscription_created
       "subscription_created",
       "subscription_updated",
       "subscription_payment_success",
@@ -57,13 +58,17 @@ export async function POST(req: Request) {
       const attrs = payload.data?.attributes || {};
       const lsStatus = attrs.status as string | undefined; // active | on_trial | past_due | cancelled | unpaid | expired | paused
       const periodEnd = attrs.ends_at || attrs.renews_at || null;
-      const subscriptionId = payload.data?.id || null;
+      // "order_created" fires for the subscription's first invoice, before the
+      // subscription itself exists — its attributes.status ("paid") doesn't map to
+      // our set, and it has no subscription id/period end yet (subscription_created
+      // arrives right after with those, and updates this same row via upsert).
+      const subscriptionId = eventName === "order_created" ? null : payload.data?.id || null;
 
       // Colapsamos los estados de Lemon Squeezy a nuestro propio set:
       // 'active'    → tiene acceso ahora mismo (incluye "cancelled pero aún dentro del período pagado")
       // 'expired'   → sin acceso
       let ourStatus: "active" | "expired" = "expired";
-      if (lsStatus === "active" || lsStatus === "on_trial" || lsStatus === "cancelled") {
+      if (eventName === "order_created" || lsStatus === "active" || lsStatus === "on_trial" || lsStatus === "cancelled") {
         ourStatus = "active";
       }
       if (eventName === "subscription_expired" || lsStatus === "expired" || lsStatus === "unpaid") {

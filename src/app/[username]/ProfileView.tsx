@@ -147,7 +147,12 @@ export default function ProfileView({ profile, links }: ProfileViewProps) {
       const checkoutRes = await fetch("/api/lemonsqueezy/link-checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ link_id: paywallLink.id, email: normalizedEmail, telegram_username: unlockTelegram }),
+        body: JSON.stringify({
+          link_id: paywallLink.id,
+          email: normalizedEmail,
+          telegram_username: unlockTelegram,
+          redirect_path: window.location.pathname,
+        }),
       });
       const checkoutData = await checkoutRes.json();
       if (!checkoutRes.ok || !checkoutData.url) {
