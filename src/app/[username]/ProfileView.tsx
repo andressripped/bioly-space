@@ -117,7 +117,7 @@ export default function ProfileView({ profile, links }: ProfileViewProps) {
 
   return (
     <div 
-      className={`min-h-screen flex flex-col items-center text-[#111111] dark:text-[#f4f4f5] selection:bg-black selection:text-white relative ${fontClass}`}
+      className={`min-h-screen flex flex-col items-center text-[#111111] selection:bg-black selection:text-white relative ${fontClass}`}
       style={{
         background: bgType === "gradient" ? bgValue : bgType === "solid" ? bgValue : "#000000",
       }}
@@ -143,8 +143,8 @@ export default function ProfileView({ profile, links }: ProfileViewProps) {
       <main className={`w-full max-w-xl px-6 ${bgType === "solid" ? "-mt-16 sm:-mt-20" : bgType === "image_fade" ? "pt-24 sm:pt-32" : "mt-8"} pb-20 flex flex-col items-center relative z-10`}>
 
         {/* Avatar */}
-        <div className={`w-32 h-32 sm:w-40 sm:h-40 rounded-full p-1.5 shadow-2xl mb-6 relative ${bgType === "solid" ? "bg-white dark:bg-[#050505]" : "bg-white/10 backdrop-blur-md border border-white/20"}`}>
-          <div className="w-full h-full rounded-full overflow-hidden bg-gray-100 dark:bg-[#111] border border-black/5 dark:border-white/5">
+        <div className={`w-32 h-32 sm:w-40 sm:h-40 rounded-full p-1.5 shadow-2xl mb-6 relative ${bgType === "solid" ? "bg-white" : "bg-white/10 backdrop-blur-md border border-white/20"}`}>
+          <div className="w-full h-full rounded-full overflow-hidden bg-gray-100 border border-black/5">
             {profile.avatar_url ? (
               <img src={profile.avatar_url} alt={profile.display_name} className="w-full h-full object-cover" />
             ) : (
@@ -156,18 +156,18 @@ export default function ProfileView({ profile, links }: ProfileViewProps) {
           <button
             onClick={handleShare}
             title="Compartir"
-            className="absolute bottom-2 right-2 p-3 bg-white dark:bg-[#111] rounded-full shadow-xl border border-[#eeeeee] dark:border-[#222] hover:scale-110 active:scale-95 transition-all"
+            className="absolute bottom-2 right-2 p-3 bg-white rounded-full shadow-xl border border-[#eeeeee] hover:scale-110 active:scale-95 transition-all"
           >
-            <PiShareNetwork className="w-5 h-5 text-[#111111] dark:text-white" />
+            <PiShareNetwork className="w-5 h-5 text-[#111111]" />
           </button>
         </div>
 
         {/* Name & Bio */}
         <div className="text-center mb-10 space-y-2">
-          <h1 className={`text-3xl sm:text-4xl font-bold tracking-tight flex items-center justify-center flex-wrap gap-1 ${bgType === "image_fade" ? "text-white drop-shadow-md" : "text-[#111111] dark:text-white"}`}>
+          <h1 className={`text-3xl sm:text-4xl font-bold tracking-tight flex items-center justify-center flex-wrap gap-1 ${bgType === "image_fade" ? "text-white drop-shadow-md" : "text-[#111111]"}`}>
             {renderWithAppleEmojis(profile.display_name || profile.username)}
           </h1>
-          <div className={`text-base max-w-md mx-auto leading-relaxed flex items-center justify-center flex-wrap gap-0.5 ${bgType === "image_fade" ? "text-gray-200" : "text-[#666666] dark:text-[#a1a1aa]"}`}>
+          <div className={`text-base max-w-md mx-auto leading-relaxed flex items-center justify-center flex-wrap gap-0.5 ${bgType === "image_fade" ? "text-gray-200" : "text-[#666666]"}`}>
             {renderWithAppleEmojis(profile.bio || "Bienvenido a mi espacio digital.")}
           </div>
         </div>
@@ -191,7 +191,7 @@ export default function ProfileView({ profile, links }: ProfileViewProps) {
                       handleLinkClick(link);
                     }
                   }}
-                  className="relative w-12 h-12 flex-shrink-0 rounded-full flex items-center justify-center transition-transform hover:scale-110 shadow-lg border border-black/5 dark:border-white/10 overflow-hidden"
+                  className="relative w-12 h-12 flex-shrink-0 rounded-full flex items-center justify-center transition-transform hover:scale-110 shadow-lg border border-black/5 overflow-hidden"
                 style={{
                   background: link.icon === 'instagram' ? 'linear-gradient(45deg, #ffe17d 0%, #fa9137 20%, #eb4141 40%, #c43aee 70%, #4c64d3 100%)'
                     : link.icon === 'tiktok' ? '#000000'
@@ -238,7 +238,7 @@ export default function ProfileView({ profile, links }: ProfileViewProps) {
                     : `group flex items-center gap-4 px-5 py-4 transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.98] ${btnClass} ${
                         isOutline
                           ? "bg-transparent border-2 hover:opacity-80"
-                          : "bg-[#111111] dark:bg-white border border-transparent hover:opacity-90 shadow-md hover:shadow-lg"
+                          : "bg-[#111111] border border-transparent hover:opacity-90 shadow-md hover:shadow-lg"
                       }`
                 }
               style={!isCard && isOutline ? { borderColor: themeColor, color: themeColor } : {}}
@@ -265,14 +265,14 @@ export default function ProfileView({ profile, links }: ProfileViewProps) {
                   }`}>
                     <PlatformIcon
                       id={link.icon}
-                      className={`w-5 h-5 ${isOutline ? "" : "text-white dark:text-black"}`}
+                      className={`w-5 h-5 ${isOutline ? "" : "text-white"}`}
                     />
                   </div>
-                  <span className={`font-bold text-base flex-1 text-left ${isOutline ? "" : "text-white dark:text-black"}`}>
+                  <span className={`font-bold text-base flex-1 text-left ${isOutline ? "" : "text-white"}`}>
                     {link.title}
                   </span>
                   <svg
-                    className={`w-4 h-4 opacity-50 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all ${isOutline ? "" : "text-white dark:text-black"}`}
+                    className={`w-4 h-4 opacity-50 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all ${isOutline ? "" : "text-white"}`}
                     fill="none" viewBox="0 0 24 24" stroke="currentColor"
                   >
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -291,14 +291,14 @@ export default function ProfileView({ profile, links }: ProfileViewProps) {
         </div>
 
         {/* Email Collection / Lead Gen */}
-        <div className="w-full mt-10 p-6 bg-white dark:bg-[#111] rounded-3xl border border-[#eeeeee] dark:border-[#222] shadow-sm">
+        <div className="w-full mt-10 p-6 bg-white rounded-3xl border border-[#eeeeee] shadow-sm">
           <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 bg-gray-100 dark:bg-black rounded-lg">
-              <PiEnvelope className="w-5 h-5 text-[#111111] dark:text-white" />
+            <div className="p-2 bg-gray-100 rounded-lg">
+              <PiEnvelope className="w-5 h-5 text-[#111111]" />
             </div>
             <div>
               <h3 className="font-bold text-sm">Suscríbete</h3>
-              <p className="text-xs text-[#666666] dark:text-[#a1a1aa]">Recibe mis últimas actualizaciones.</p>
+              <p className="text-xs text-[#666666]">Recibe mis últimas actualizaciones.</p>
             </div>
           </div>
           <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-2">
@@ -308,15 +308,15 @@ export default function ProfileView({ profile, links }: ProfileViewProps) {
               placeholder="tu@email.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full sm:flex-1 bg-[#f9fafb] dark:bg-[#0a0a0a] border border-[#eeeeee] dark:border-[#333] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#111] dark:focus:border-white transition-colors"
+              className="w-full sm:flex-1 bg-[#f9fafb] border border-[#eeeeee] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#111] transition-colors"
             />
             <button
               type="submit"
               disabled={subscribing}
               className={`w-full sm:w-auto px-4 py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center min-w-[100px] ${
                 isOutline 
-                  ? "border-2 border-[#111] dark:border-white text-[#111] dark:text-white hover:bg-[#111] hover:text-white dark:hover:bg-white dark:hover:text-black" 
-                  : "bg-[#111111] dark:bg-white text-white dark:text-black hover:opacity-90"
+                  ? "border-2 border-[#111] text-[#111] hover:bg-[#111] hover:text-white" 
+                  : "bg-[#111111] text-white hover:opacity-90"
               }`}
             >
               {subscribing ? <PiSpinner className="w-4 h-4 animate-spin" /> : "Suscribirme"}
@@ -334,10 +334,10 @@ export default function ProfileView({ profile, links }: ProfileViewProps) {
         <footer className="mt-20">
           <a
             href="/"
-            className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-[#111] rounded-full text-[10px] font-bold uppercase tracking-widest text-[#999999] hover:text-[#111111] dark:hover:text-white transition-colors border border-[#eeeeee] dark:border-[#222]"
+            className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-full text-[10px] font-bold uppercase tracking-widest text-[#999999] hover:text-[#111111] transition-colors border border-[#eeeeee]"
           >
             <span>Creado con</span>
-            <span className="text-[#111111] dark:text-white">Bioly</span>
+            <span className="text-[#111111]">Bioly</span>
           </a>
         </footer>
       </main>
