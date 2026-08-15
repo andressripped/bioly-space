@@ -543,6 +543,11 @@ export default function ProfileView({ profile, links }: ProfileViewProps) {
                 </p>
               </div>
               {unlockError && <p className="text-xs text-red-500 font-medium">{unlockError}</p>}
+              <p className="text-[10px] text-[#999999] leading-relaxed text-center">
+                El acceso se otorga de inmediato. Al suscribirte aceptas que{" "}
+                <span className="font-semibold text-[#666666]">no hay reembolsos</span>{" "}
+                (<a href="/reembolsos" target="_blank" rel="noopener noreferrer" className="underline">ver política</a>).
+              </p>
               <button
                 type="submit"
                 disabled={unlockLoading}

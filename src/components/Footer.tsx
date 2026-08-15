@@ -24,9 +24,9 @@ export function Footer() {
           <div>
             <h4 className="font-bold text-sm mb-4 uppercase tracking-widest text-gray-400">Legal</h4>
             <ul className="space-y-2 text-sm text-[#555555] dark:text-[#a1a1aa]">
-              <li><Link href="#" className="hover:text-black dark:hover:text-white transition-colors">Privacidad</Link></li>
-              <li><Link href="#" className="hover:text-black dark:hover:text-white transition-colors">Términos</Link></li>
-              <li><Link href="#" className="hover:text-black dark:hover:text-white transition-colors">Cookies</Link></li>
+              <li><Link href="/privacidad" className="hover:text-black dark:hover:text-white transition-colors">Privacidad</Link></li>
+              <li><Link href="/terminos" className="hover:text-black dark:hover:text-white transition-colors">Términos</Link></li>
+              <li><Link href="/reembolsos" className="hover:text-black dark:hover:text-white transition-colors">Reembolsos</Link></li>
             </ul>
           </div>
         </div>
