@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useRef, useEffect } from "react";
 import {
-  PiX, PiLink, PiTextAa, PiGlobe, PiMagnifyingGlass, PiPlus, PiSpinner, PiImageSquare, PiLockKey, PiCurrencyDollar, PiUsers, PiCaretDown, PiCaretUp
+  PiX, PiLink, PiTextAa, PiGlobe, PiMagnifyingGlass, PiPlus, PiSpinner, PiImageSquare, PiLockKey, PiUsers, PiCaretDown, PiCaretUp
 } from "react-icons/pi";
 import { 
   SiInstagram, SiYoutube, SiTiktok, SiX, SiFacebook, 
@@ -11,6 +11,7 @@ import {
 } from "react-icons/si";
 import { FaLinkedin } from "react-icons/fa";
 import { createClient } from "@/utils/supabase/client";
+import { LINK_PRICE_TIERS, isValidLinkPrice } from "@/lib/linkPricing";
 
 interface Platform {
   id: string;
@@ -163,8 +164,8 @@ export function AddLinkModal({ isOpen, onClose, onSuccess, editLink }: AddLinkMo
 
       const finalTitle = title.trim() || selectedPlatform.name;
 
-      if (isPaid && (!priceUsd || Number(priceUsd) < 0.5)) {
-        throw new Error("El precio mínimo para un link privado es $0.50 USD");
+      if (isPaid && !isValidLinkPrice(Number(priceUsd))) {
+        throw new Error("Elige uno de los precios disponibles para el link privado");
       }
       const finalPriceUsd = isPaid ? Number(priceUsd) : null;
 
@@ -380,21 +381,23 @@ export function AddLinkModal({ isOpen, onClose, onSuccess, editLink }: AddLinkMo
                   <label className="block text-xs font-bold uppercase tracking-widest text-[#999999] mb-2 ml-1">
                     Precio mensual (USD)
                   </label>
-                  <div className="relative">
-                    <PiCurrencyDollar className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#999999]" />
-                    <input
-                      type="number"
-                      min="0.5"
-                      step="0.5"
-                      required={isPaid}
-                      value={priceUsd}
-                      onChange={(e) => setPriceUsd(e.target.value)}
-                      className="w-full bg-[#f9fafb] dark:bg-[#111] border border-[#eeeeee] dark:border-[#222] rounded-2xl py-4 pl-12 pr-16 text-[#111111] dark:text-white focus:outline-none focus:border-[#111111] dark:focus:border-white transition-all font-medium"
-                      placeholder="5.00"
-                    />
-                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-[#999999]">USD/mes</span>
+                  <div className="grid grid-cols-3 gap-2">
+                    {LINK_PRICE_TIERS.map((tier) => (
+                      <button
+                        key={tier}
+                        type="button"
+                        onClick={() => setPriceUsd(String(tier))}
+                        className={`py-3 rounded-2xl border font-bold text-sm transition-all cursor-pointer ${
+                          Number(priceUsd) === tier
+                            ? "bg-[#111111] border-[#111111] text-white dark:bg-white dark:border-white dark:text-black"
+                            : "bg-[#f9fafb] dark:bg-[#111] border-[#eeeeee] dark:border-[#222] text-[#555] hover:border-[#111] dark:hover:border-white"
+                        }`}
+                      >
+                        ${tier.toFixed(2)}
+                      </button>
+                    ))}
                   </div>
-                  <p className="mt-2 text-[10px] text-[#999999] font-medium ml-1">Mínimo $0.50 USD/mes. Al pagar, tus seguidores dejan su email y su nombre de Telegram para que sepas a quién agregar.</p>
+                  <p className="mt-2 text-[10px] text-[#999999] font-medium ml-1">Precio fijo — al pagar, tus seguidores dejan su email y su nombre de Telegram para que sepas a quién agregar.</p>
 
                   {editLink && (
                     <div className="mt-4">

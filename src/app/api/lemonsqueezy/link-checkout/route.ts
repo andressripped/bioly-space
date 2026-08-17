@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createCheckout } from "@lemonsqueezy/lemonsqueezy.js";
 import { setupLemonSqueezy } from "@/utils/lemonsqueezy";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
+import { isValidLinkPrice, linkVariantEnvVar } from "@/lib/linkPricing";
 
 export async function POST(req: Request) {
   try {
@@ -27,22 +28,21 @@ export async function POST(req: Request) {
     if (linkError || !link) {
       return NextResponse.json({ error: "Link no encontrado" }, { status: 404 });
     }
-    if (!link.is_paid || !link.price_usd || link.price_usd <= 0) {
-      return NextResponse.json({ error: "Este link no requiere pago" }, { status: 400 });
+    if (!link.is_paid || !link.price_usd || !isValidLinkPrice(Number(link.price_usd))) {
+      return NextResponse.json({ error: "Este link no tiene un precio válido configurado" }, { status: 400 });
     }
 
     setupLemonSqueezy();
     const storeId = process.env.LEMONSQUEEZY_STORE_ID;
-    const variantId = process.env.LEMONSQUEEZY_LINK_VARIANT_ID;
+    const variantId = process.env[linkVariantEnvVar(Number(link.price_usd))];
 
     if (!storeId || !variantId) {
-      console.error("Falta LEMONSQUEEZY_STORE_ID o LEMONSQUEEZY_LINK_VARIANT_ID");
+      console.error(`Falta LEMONSQUEEZY_STORE_ID o ${linkVariantEnvVar(Number(link.price_usd))}`);
       return NextResponse.json({ error: "Configuración de pagos incompleta" }, { status: 500 });
     }
 
     const origin = req.headers.get("origin") || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
     const safeRedirectPath = typeof redirect_path === "string" && redirect_path.startsWith("/") ? redirect_path : "/";
-    const priceInCents = Math.round(Number(link.price_usd) * 100);
 
     const { data, error } = await createCheckout(storeId, variantId, {
       checkoutData: {
@@ -54,7 +54,6 @@ export async function POST(req: Request) {
           telegram_username: normalizedTelegram,
         },
       },
-      customPrice: priceInCents,
       checkoutOptions: {
         embed: false,
       },
