@@ -45,9 +45,10 @@ interface AddLinkModalProps {
   onClose: () => void;
   onSuccess: () => void;
   editLink?: any;
+  defaultPaid?: boolean;
 }
 
-export function AddLinkModal({ isOpen, onClose, onSuccess, editLink }: AddLinkModalProps) {
+export function AddLinkModal({ isOpen, onClose, onSuccess, editLink, defaultPaid }: AddLinkModalProps) {
   const [selectedPlatform, setSelectedPlatform] = useState<Platform>(PLATFORMS[0]);
   const [title, setTitle] = useState("");
   const [handle, setHandle] = useState("");
@@ -109,12 +110,12 @@ export function AddLinkModal({ isOpen, onClose, onSuccess, editLink }: AddLinkMo
         setHandle("");
         setIsSocial(false);
         setThumbnailUrl("");
-        setIsPaid(false);
+        setIsPaid(!!defaultPaid);
         setPriceUsd("");
       }
       setError(null);
     }
-  }, [isOpen, editLink]);
+  }, [isOpen, editLink, defaultPaid]);
 
   const filteredPlatforms = useMemo(() => {
     return PLATFORMS.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));

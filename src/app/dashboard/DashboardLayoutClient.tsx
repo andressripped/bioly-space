@@ -11,7 +11,8 @@ import {
   PiX,
   PiChartBar,
   PiCrown,
-  PiArrowSquareOut
+  PiArrowSquareOut,
+  PiCurrencyDollar
 } from "react-icons/pi";
 
 interface DashboardLayoutClientProps {
@@ -30,6 +31,7 @@ export default function DashboardLayoutClient({
 
   const navItems = [
     { href: "/dashboard/profile", icon: PiUser, label: "Perfil" },
+    { href: "/dashboard/monetization", icon: PiCurrencyDollar, label: "Monetización" },
     { href: "/dashboard/analytics", icon: PiChartBar, label: "Analíticas" },
     { href: "/dashboard/settings", icon: PiGear, label: "Ajustes" },
   ];
