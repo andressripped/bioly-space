@@ -85,7 +85,7 @@ export default function DashboardLayoutClient({
         )}
 
         <Link
-          href="/auth/signout"
+          href="/auth/signout" prefetch={false}
           className="flex items-center gap-3 px-4 py-3 text-[#555555] dark:text-[#a1a1aa] hover:text-red-500 transition-colors rounded-xl text-sm font-medium cursor-pointer"
         >
           <PiSignOut className="w-4 h-4" />
@@ -141,7 +141,7 @@ export default function DashboardLayoutClient({
               </div>
             )}
 
-            <Link href="/auth/signout" className="flex items-center gap-3 px-4 py-3 text-[#555555] dark:text-[#a1a1aa] hover:text-red-500 transition-colors rounded-xl text-sm font-medium cursor-pointer">
+            <Link href="/auth/signout" prefetch={false} className="flex items-center gap-3 px-4 py-3 text-[#555555] dark:text-[#a1a1aa] hover:text-red-500 transition-colors rounded-xl text-sm font-medium cursor-pointer">
               <PiSignOut className="w-4 h-4" />
               Cerrar sesión
             </Link>
@@ -160,7 +160,7 @@ export default function DashboardLayoutClient({
             <span className="text-xl font-extrabold tracking-tighter">bioly.</span>
           </div>
           {/* Signout shortcut on mobile header */}
-          <Link href="/auth/signout" className="p-2 border border-[#eeeeee] dark:border-[#222] rounded-xl hover:bg-gray-50 dark:hover:bg-[#111] transition-colors cursor-pointer text-[#555] dark:text-[#a1a1aa]">
+          <Link href="/auth/signout" prefetch={false} className="p-2 border border-[#eeeeee] dark:border-[#222] rounded-xl hover:bg-gray-50 dark:hover:bg-[#111] transition-colors cursor-pointer text-[#555] dark:text-[#a1a1aa]">
             <PiSignOut className="w-4 h-4" />
           </Link>
         </div>

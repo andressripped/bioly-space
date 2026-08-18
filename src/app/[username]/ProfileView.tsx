@@ -18,6 +18,26 @@ const getSafeReferrer = () => {
   }
 };
 
+// Fires an analytics event without blocking navigation. sendBeacon queues the
+// request in the browser and keeps it alive even if the page is unloaded
+// right after (e.g. clicking a link) — a plain fetch() can get cancelled in
+// that case, silently dropping the event. Falls back to fetch with
+// keepalive for browsers/contexts where sendBeacon isn't available.
+const trackEvent = (payload: Record<string, unknown>) => {
+  const body = JSON.stringify(payload);
+  if (typeof navigator !== "undefined" && navigator.sendBeacon) {
+    const blob = new Blob([body], { type: "application/json" });
+    const sent = navigator.sendBeacon("/api/track", blob);
+    if (sent) return;
+  }
+  fetch("/api/track", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body,
+    keepalive: true,
+  }).catch(() => {});
+};
+
 const ADULT_DOMAINS = ["onlyfans.com", "fansly.com", "patreon.com", "justforfans.com"];
 
 // Same mapping as ProfileClient — single source of truth
@@ -66,15 +86,11 @@ export default function ProfileView({ profile, links }: ProfileViewProps) {
   useEffect(() => {
     if (tracked.current) return;
     tracked.current = true;
-    fetch("/api/track", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        profile_id: profile.id,
-        event_type: "page_view",
-        referrer: getSafeReferrer(),
-      }),
-    }).catch(() => {});
+    trackEvent({
+      profile_id: profile.id,
+      event_type: "page_view",
+      referrer: getSafeReferrer(),
+    });
   }, [profile.id]);
 
   // Check which paid links the returning visitor already unlocked (by remembered email)
@@ -166,16 +182,12 @@ export default function ProfileView({ profile, links }: ProfileViewProps) {
   };
 
   const handleLinkClick = (link: any) => {
-    fetch("/api/track", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        profile_id: profile.id,
-        link_id: link.id,
-        event_type: "link_click",
-        referrer: getSafeReferrer(),
-      }),
-    }).catch(() => {});
+    trackEvent({
+      profile_id: profile.id,
+      link_id: link.id,
+      event_type: "link_click",
+      referrer: getSafeReferrer(),
+    });
   };
 
   const handleShare = () => {
@@ -184,11 +196,7 @@ export default function ProfileView({ profile, links }: ProfileViewProps) {
     } else {
       navigator.clipboard.writeText(window.location.href);
     }
-    fetch("/api/track", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ profile_id: profile.id, event_type: "share" }),
-    }).catch(() => {});
+    trackEvent({ profile_id: profile.id, event_type: "share" });
   };
 
   const handleSubscribe = async (e: React.FormEvent) => {

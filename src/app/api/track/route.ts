@@ -1,6 +1,16 @@
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { createClient } from "@/utils/supabase/server";
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
+
+// Module-level singleton: reused across invocations on the same warm
+// instance instead of re-instantiated (and re-authenticated) on every
+// request, which was a meaningful chunk of this route's latency.
+const supabaseAdmin = process.env.SUPABASE_SERVICE_ROLE_KEY
+  ? createAdminClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY
+    )
+  : null;
 
 export async function POST(request: Request) {
   try {
@@ -47,43 +57,34 @@ export async function POST(request: Request) {
     }
 
     // Si tenemos la Service Role Key (en Vercel/Producción), la usamos para saltarnos RLS completamente y registrar de forma segura
-    let supabase;
-    if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
-      supabase = createAdminClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY
-      );
-    } else {
-      supabase = await createClient();
-    }
+    const supabase = supabaseAdmin || (await createClient());
 
-    // Validate profile_id refers to a real profile before inserting (service role bypasses RLS,
-    // so without this check anyone could spam analytics rows for arbitrary/non-existent profiles).
-    const { data: profileExists } = await supabase
-      .from("profiles")
-      .select("id")
-      .eq("id", profile_id)
-      .single();
+    // Respond immediately; do the actual insert after the response is sent.
+    // `profile_id` is still validated — not with an extra SELECT round-trip
+    // beforehand, but by the `analytics_profile_id_fkey` foreign key
+    // constraint, which Postgres enforces on the insert itself regardless
+    // of RLS. An invalid id fails the insert (logged, not thrown) instead
+    // of ever reaching the table.
+    after(async () => {
+      const { error } = await supabase.from("analytics").insert({
+        profile_id,
+        link_id: link_id || null,
+        event_type,
+        referrer,
+        country,
+        city,
+        device,
+        browser,
+      });
 
-    if (!profileExists) {
-      return NextResponse.json({ error: "Invalid profile_id" }, { status: 400 });
-    }
-
-    const { error } = await supabase.from("analytics").insert({
-      profile_id,
-      link_id: link_id || null,
-      event_type,
-      referrer,
-      country,
-      city,
-      device,
-      browser,
+      if (error) {
+        // Code 23503 = foreign key violation (invalid profile_id) — expected
+        // occasionally from stale/forged requests, not worth logging loudly.
+        if (error.code !== "23503") {
+          console.warn("Analytics insert failed:", error.message);
+        }
+      }
     });
-
-    if (error) {
-      // If analytics table doesn't exist yet, fail silently (don't break the page)
-      console.warn("Analytics insert failed (table may not exist yet):", error.message);
-    }
 
     return NextResponse.json({ ok: true });
   } catch (err: any) {

@@ -12,6 +12,12 @@ export default async function MonetizationPage() {
     redirect("/login");
   }
 
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("username")
+    .eq("id", user.id)
+    .single();
+
   const { data: links } = await supabase
     .from("links")
     .select("id, title, url, icon, is_paid, price_usd, position")
@@ -30,7 +36,7 @@ export default async function MonetizationPage() {
         </p>
       </div>
 
-      <MonetizationClient initialLinks={links || []} userId={user.id} />
+      <MonetizationClient initialLinks={links || []} userId={user.id} username={profile?.username || ""} />
     </main>
   );
 }

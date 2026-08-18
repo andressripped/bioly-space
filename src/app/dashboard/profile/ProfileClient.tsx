@@ -33,6 +33,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { revalidateProfile } from "@/utils/revalidateProfile";
 
 type Device = "desktop" | "tablet" | "mobile";
 
@@ -262,12 +263,16 @@ export default function ProfileClient({ user }: { user: any }) {
       .order("position", { ascending: true });
 
     if (!error) setLinks(data || []);
+    revalidateProfile(username);
   };
 
   const handleDeleteLink = async (id: string) => {
     if (!confirm("¿Estás seguro de que quieres eliminar este enlace?")) return;
     const { error } = await supabase.from("links").delete().eq("id", id);
-    if (!error) setLinks(links.filter((l) => l.id !== id));
+    if (!error) {
+      setLinks(links.filter((l) => l.id !== id));
+      revalidateProfile(username);
+    }
   };
 
   const handleDragEnd = async (event: DragEndEvent) => {
@@ -286,6 +291,7 @@ export default function ProfileClient({ user }: { user: any }) {
       supabase.from("links").update({ position: index }).eq("id", link.id)
     );
     await Promise.all(updates);
+    revalidateProfile(username);
   };
 
 
@@ -331,6 +337,7 @@ export default function ProfileClient({ user }: { user: any }) {
         updated_at:   new Date().toISOString(),
       });
       if (upsertErr) throw upsertErr;
+      revalidateProfile(username);
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     } catch (err: any) {
@@ -1134,6 +1141,7 @@ export default function ProfileClient({ user }: { user: any }) {
             supabase.from("links").update({ title: link.title }).eq("id", link.id)
           );
           await Promise.all(linkUpdates);
+          revalidateProfile(username);
 
           setSuccess(true);
           setTimeout(() => setSuccess(false), 3000);

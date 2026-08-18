@@ -5,10 +5,12 @@ import { PiPlus, PiSpinner, PiUsers, PiCaretDown, PiCaretUp, PiPencilSimple, PiL
 import { createClient } from "@/utils/supabase/client";
 import { PlatformIcon } from "@/components/PlatformIcon";
 import { AddLinkModal } from "../AddLinkModal";
+import { revalidateProfile } from "@/utils/revalidateProfile";
 
 interface MonetizationClientProps {
   initialLinks: any[];
   userId: string;
+  username: string;
 }
 
 function SubscribersPanel({ linkId }: { linkId: string }) {
@@ -80,7 +82,7 @@ function SubscribersPanel({ linkId }: { linkId: string }) {
   );
 }
 
-export default function MonetizationClient({ initialLinks, userId }: MonetizationClientProps) {
+export default function MonetizationClient({ initialLinks, userId, username }: MonetizationClientProps) {
   const [links, setLinks] = useState<any[]>(initialLinks);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingLink, setEditingLink] = useState<any | null>(null);
@@ -94,6 +96,7 @@ export default function MonetizationClient({ initialLinks, userId }: Monetizatio
       .eq("is_paid", true)
       .order("position", { ascending: true });
     setLinks(data || []);
+    revalidateProfile(username);
   };
 
   return (

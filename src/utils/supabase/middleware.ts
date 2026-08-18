@@ -2,6 +2,18 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function updateSession(request: NextRequest) {
+  const { pathname } = request.nextUrl
+
+  const isProtected = pathname.startsWith('/dashboard') || pathname.startsWith('/onboarding')
+  const isAuthPage = pathname === '/login' || pathname === '/signup'
+
+  // Every other route (public profiles, the homepage, legal pages, /auth/signout,
+  // etc.) doesn't need to know who's logged in, so skip the Supabase Auth
+  // network round-trip entirely instead of paying for it on every request.
+  if (!isProtected && !isAuthPage) {
+    return NextResponse.next({ request })
+  }
+
   let supabaseResponse = NextResponse.next({
     request,
   })
@@ -30,10 +42,7 @@ export async function updateSession(request: NextRequest) {
   // Refresh session if expired
   const { data: { user } } = await supabase.auth.getUser()
 
-  const { pathname } = request.nextUrl
-
   // Protected routes: require authentication
-  const isProtected = pathname.startsWith('/dashboard') || pathname.startsWith('/onboarding')
   if (isProtected && !user) {
     const redirectUrl = request.nextUrl.clone()
     redirectUrl.pathname = '/login'
@@ -41,7 +50,6 @@ export async function updateSession(request: NextRequest) {
   }
 
   // If logged in and trying to access login/signup, redirect to dashboard
-  const isAuthPage = pathname === '/login' || pathname === '/signup'
   if (isAuthPage && user) {
     const redirectUrl = request.nextUrl.clone()
     redirectUrl.pathname = '/dashboard'

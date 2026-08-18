@@ -1,7 +1,11 @@
-import { createClient } from "@/utils/supabase/server";
+import { createPublicClient } from "@/utils/supabase/public";
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
 import ProfileView from "./ProfileView";
+
+// Statically render this page and regenerate it at most once an hour, or
+// immediately when the owner saves changes (see /api/revalidate-profile).
+export const revalidate = 3600;
 
 type Props = {
   params: Promise<{ username: string }>;
@@ -10,7 +14,7 @@ type Props = {
 // ─── Dynamic Open Graph Metadata ─────────────────────────────────────────────
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { username } = await params;
-  const supabase = await createClient();
+  const supabase = createPublicClient();
 
   const { data: profile } = await supabase
     .from("profiles")
@@ -62,7 +66,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default async function PublicProfilePage({ params }: Props) {
   const { username } = await params;
-  const supabase = await createClient();
+  const supabase = createPublicClient();
 
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
