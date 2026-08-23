@@ -64,13 +64,15 @@ export async function POST(req: Request) {
       // arrives right after with those, and updates this same row via upsert).
       const subscriptionId = eventName === "order_created" ? null : payload.data?.id || null;
 
-      // Colapsamos los estados de Lemon Squeezy a nuestro propio set:
-      // 'active'    → tiene acceso ahora mismo (incluye "cancelled pero aún dentro del período pagado")
-      // 'expired'   → sin acceso
-      let ourStatus: "active" | "expired" = "expired";
-      if (eventName === "order_created" || lsStatus === "active" || lsStatus === "on_trial" || lsStatus === "cancelled") {
-        ourStatus = "active";
-      }
+      // Colapsamos los estados de Lemon Squeezy a nuestro propio set. Por seguridad,
+      // el default es 'active': para una función que cobra dinero, es mucho peor
+      // marcar por error como vencido a alguien que sí pagó (y bloquearlo) que lo
+      // contrario. Solo pasamos a 'expired' ante una señal explícita y definitiva
+      // de que la suscripción ya no está vigente — nunca por "no reconozco este
+      // estado" (eso fue exactamente lo que causó el bug: un status intermedio de
+      // Lemon Squeezy que no estaba en la lista blanca caía en "expired" por
+      // defecto, aunque el cliente siguiera pagando con normalidad).
+      let ourStatus: "active" | "expired" = "active";
       if (eventName === "subscription_expired" || lsStatus === "expired" || lsStatus === "unpaid") {
         ourStatus = "expired";
       }
